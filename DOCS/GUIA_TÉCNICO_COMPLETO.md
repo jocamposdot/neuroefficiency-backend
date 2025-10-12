@@ -254,13 +254,13 @@ void shouldLoginSuccessfully() {
 
 ## 4️⃣ GUIA DO POSTMAN
 
-### **📦 Collection: Neuroefficiency_Auth_Demo.postman_collection.json**
+### **📦 Collection: Neuroefficiency_Auth.postman_collection.json (v1.1)**
 
 ### **Importação:**
 1. Abrir Postman
 2. `File` → `Import`
-3. Selecionar arquivo da collection
-4. Pronto para usar
+3. Selecionar arquivo `Neuroefficiency_Auth.postman_collection.json` na raiz do projeto
+4. Collection pronta para uso (zero configuração necessária)
 
 ### **Ordem de Execução:**
 
