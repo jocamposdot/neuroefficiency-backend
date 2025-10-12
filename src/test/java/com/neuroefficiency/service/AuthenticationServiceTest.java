@@ -14,11 +14,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,12 +48,17 @@ class AuthenticationServiceTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private SecurityContextRepository securityContextRepository;
+
     @InjectMocks
     private AuthenticationService authenticationService;
 
     private RegisterRequest validRegisterRequest;
     private LoginRequest validLoginRequest;
     private Usuario mockUsuario;
+    private MockHttpServletRequest mockRequest;
+    private MockHttpServletResponse mockResponse;
 
     @BeforeEach
     void setUp() {
@@ -74,6 +82,10 @@ class AuthenticationServiceTest {
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)
                 .build();
+
+        // Inicializar mocks de request e response
+        mockRequest = new MockHttpServletRequest();
+        mockResponse = new MockHttpServletResponse();
     }
 
     // ==================== TESTES DE REGISTRO ====================
@@ -141,7 +153,7 @@ class AuthenticationServiceTest {
                 .thenReturn(mockAuth);
 
         // Act
-        AuthResponse response = authenticationService.login(validLoginRequest);
+        AuthResponse response = authenticationService.login(validLoginRequest, mockRequest, mockResponse);
 
         // Assert
         assertThat(response).isNotNull();
@@ -150,6 +162,7 @@ class AuthenticationServiceTest {
         assertThat(response.getUser().getUsername()).isEqualTo("testuser");
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+        verify(securityContextRepository).saveContext(any(), any(), any());
     }
 
     @Test
@@ -160,7 +173,7 @@ class AuthenticationServiceTest {
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
         // Act & Assert
-        assertThatThrownBy(() -> authenticationService.login(validLoginRequest))
+        assertThatThrownBy(() -> authenticationService.login(validLoginRequest, mockRequest, mockResponse))
                 .isInstanceOf(BadCredentialsException.class)
                 .hasMessage("Bad credentials");
 
@@ -175,7 +188,7 @@ class AuthenticationServiceTest {
                 .thenThrow(new BadCredentialsException("Bad credentials"));
 
         // Act & Assert
-        assertThatThrownBy(() -> authenticationService.login(validLoginRequest))
+        assertThatThrownBy(() -> authenticationService.login(validLoginRequest, mockRequest, mockResponse))
                 .isInstanceOf(BadCredentialsException.class);
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
