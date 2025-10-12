@@ -82,6 +82,5 @@ Desktop.ini
 .env.test.local
 .env.production.local
 
-# Application specific
-application-*.properties
-!application.properties
+# H2 Database (desenvolvimento local)
+data/
