@@ -13,10 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Serviço de Autenticação
@@ -35,6 +40,7 @@ public class AuthenticationService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final SecurityContextRepository securityContextRepository;
 
     /**
      * Registra um novo usuário no sistema
@@ -93,12 +99,14 @@ public class AuthenticationService {
      * Autentica um usuário no sistema
      * 
      * @param request credenciais de login
+     * @param httpRequest requisição HTTP para salvar o contexto na sessão
+     * @param httpResponse resposta HTTP para salvar o contexto na sessão
      * @return resposta contendo informações do usuário autenticado
      * @throws org.springframework.security.authentication.BadCredentialsException 
      *         se as credenciais forem inválidas
      */
     @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         log.info("Tentativa de login para usuário: {}", sanitizeUsername(request.getUsername()));
 
         try {
@@ -110,8 +118,13 @@ public class AuthenticationService {
                 )
             );
 
-            // Definir autenticação no contexto de segurança
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Criar SecurityContext e definir autenticação
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
+            // CRÍTICO: Salvar o contexto na sessão HTTP
+            securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
             // Buscar usuário autenticado
             Usuario usuario = (Usuario) authentication.getPrincipal();

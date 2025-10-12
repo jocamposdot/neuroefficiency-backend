@@ -6,6 +6,7 @@ import com.neuroefficiency.dto.response.AuthResponse;
 import com.neuroefficiency.dto.response.UserResponse;
 import com.neuroefficiency.service.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,16 +61,20 @@ public class AuthController {
      * POST /api/auth/login
      * 
      * @param request credenciais de login
+     * @param httpRequest requisição HTTP
+     * @param httpResponse resposta HTTP
      * @return resposta com dados do usuário autenticado
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest) {
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
         
         log.info("Requisição de login recebida de IP: {}", getClientIP(httpRequest));
         
-        AuthResponse response = authenticationService.login(request);
+        // Chamar serviço com request e response para salvar contexto na sessão
+        AuthResponse response = authenticationService.login(request, httpRequest, httpResponse);
         
         // Adicionar informações da sessão
         HttpSession session = httpRequest.getSession(false);
