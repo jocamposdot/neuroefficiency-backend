@@ -1,5 +1,6 @@
 package com.neuroefficiency.dto.request;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
  * DTO para requisição de registro de novo usuário
  * 
  * @author Joao Fuhrmann
- * @version 1.0
+ * @version 2.0 - Adicionado campo email (Tarefa 2)
  * @since 2025-10-11
  */
 @Data
@@ -28,6 +29,12 @@ public class RegisterRequest {
         message = "Username deve conter apenas letras, números, _ ou -"
     )
     private String username;
+
+    // TAREFA 2: Campo email para recuperação de senha
+    @NotBlank(message = "Email é obrigatório")
+    @Email(message = "Email deve ser válido")
+    @Size(max = 255, message = "Email deve ter no máximo 255 caracteres")
+    private String email;
 
     @NotBlank(message = "Password é obrigatório")
     @Size(min = 8, max = 100, message = "Password deve ter entre 8 e 100 caracteres")

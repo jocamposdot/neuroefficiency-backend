@@ -20,7 +20,7 @@ import java.util.Map;
  * Captura e trata exceções lançadas pelos controllers.
  * 
  * @author Joao Fuhrmann
- * @version 1.0
+ * @version 2.0 - Adicionados handlers para recuperação de senha (Tarefa 2)
  * @since 2025-10-11
  */
 @RestControllerAdvice
@@ -122,6 +122,66 @@ public class GlobalExceptionHandler {
         
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
+
+    // =========================================================================
+    // TAREFA 2: Handlers para Recuperação de Senha
+    // =========================================================================
+
+    /**
+     * Tratamento para token expirado
+     */
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<Map<String, Object>> handleTokenExpired(
+            TokenExpiredException ex) {
+        
+        Map<String, Object> error = buildErrorResponse(
+            HttpStatus.GONE,
+            "Token expirado",
+            ex.getMessage()
+        );
+        
+        log.warn("Tentativa de uso de token expirado");
+        
+        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    }
+
+    /**
+     * Tratamento para token inválido
+     */
+    @ExceptionHandler(TokenInvalidException.class)
+    public ResponseEntity<Map<String, Object>> handleTokenInvalid(
+            TokenInvalidException ex) {
+        
+        Map<String, Object> error = buildErrorResponse(
+            HttpStatus.BAD_REQUEST,
+            "Token inválido",
+            ex.getMessage()
+        );
+        
+        log.warn("Tentativa de uso de token inválido");
+        
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    /**
+     * Tratamento para rate limit excedido
+     */
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimitExceeded(
+            RateLimitExceededException ex) {
+        
+        Map<String, Object> error = buildErrorResponse(
+            HttpStatus.TOO_MANY_REQUESTS,
+            "Rate limit excedido",
+            ex.getMessage()
+        );
+        
+        log.warn("Rate limit excedido: {}", ex.getMessage());
+        
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+    }
+
+    // =========================================================================
 
     /**
      * Tratamento genérico de exceções
