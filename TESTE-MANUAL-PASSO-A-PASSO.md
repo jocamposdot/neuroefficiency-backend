@@ -70,7 +70,7 @@ a1b2c3d4e5f6...{64 caracteres}...xyz
 6. Salve o token copiado em uma variável no PowerShell:
 
 ```powershell
-$token = "COLE_O_TOKEN_AQUI"
+$token = "324c792ae9514ff192f38a937837948abc85a26af89a419eaf308296dee50f49"
 ```
 
 ---
