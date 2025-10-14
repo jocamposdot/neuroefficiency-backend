@@ -21,7 +21,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
  * Define as regras de autenticação e autorização do sistema Neuroefficiency.
  * 
  * @author Joao Fuhrmann
- * @version 1.0
+ * @version 2.0 - Adicionados endpoints públicos de reset de senha (Tarefa 2)
  * @since 2025-10-11
  */
 @Configuration
@@ -69,11 +69,20 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authz -> authz
-                // Endpoints públicos
+                // Endpoints públicos - Autenticação
                 .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/health").permitAll()
+                
+                // TAREFA 2: Endpoints públicos - Recuperação de Senha
+                .requestMatchers("/api/auth/password-reset/request").permitAll()
+                .requestMatchers("/api/auth/password-reset/confirm").permitAll()
+                .requestMatchers("/api/auth/password-reset/validate-token/**").permitAll()
+                .requestMatchers("/api/auth/password-reset/health").permitAll()
+                
+                // Outros endpoints públicos
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 .requestMatchers("/").permitAll()
+                
                 // Todas as outras requisições precisam autenticação
                 .anyRequest().authenticated()
             )
