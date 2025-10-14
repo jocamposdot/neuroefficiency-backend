@@ -1,752 +1,751 @@
 {
-	"info": {
-		"_postman_id": "neuro-auth-complete-2025",
-		"name": "Neuroefficiency Auth API - Completa v2.0",
-		"description": "Collection completa do sistema de autenticação Neuroefficiency com Recuperação de Senha.\n\n**Versão:** 2.0 (Fase 1 + Fase 2 Completas)\n**Status:** ✅ 100% Completa e Funcional\n**Endpoints:** 9/9 (100%)\n**Última Atualização:** 14/10/2025\n**Configuração:** ✅ Zero configuração necessária\n\n**IMPORTANTE:** Execute os endpoints na ordem numérica para funcionamento correto.\n\n**Funcionalidades Fase 1:**\n- ✅ Health Check (monitoramento)\n- ✅ Registro de usuários (validações completas)\n- ✅ Login/Autenticação (sessão HTTP)\n- ✅ Obter usuário atual (requer autenticação)\n- ✅ Logout (invalidar sessão)\n\n**Funcionalidades Fase 2 (NOVO):**\n- ✅ Recuperação de senha por email\n- ✅ Validação de tokens\n- ✅ Confirmação de nova senha\n- ✅ Emails multipart (HTML + texto)\n- ✅ Rate limiting (3/hora)\n- ✅ Anti-enumeração\n- ✅ Internacionalização (pt-BR/en-US)\n\n**Segurança:**\n- BCrypt força 12 (senhas)\n- SHA-256 (tokens de reset)\n- Spring Security\n- Sessões HTTP com SecurityContext\n- Rate limiting e auditoria LGPD",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"item": [
-		{
-			"name": "1. Health Check",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Testes automatizados",
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Response has correct structure\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('status');",
-							"    pm.expect(jsonData).to.have.property('service');",
-							"    pm.expect(jsonData).to.have.property('version');",
-							"});",
-							"",
-							"pm.test(\"Service is UP\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.status).to.eql(\"UP\");",
-							"    pm.expect(jsonData.service).to.eql(\"Authentication Service\");",
-							"});",
-							"",
-							"console.log(\"✅ Health Check: Sistema operacional\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/health",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"health"
-					]
-				},
-				"description": "Verifica se o serviço de autenticação está disponível e operacional.\n\n**Endpoint:** `GET /api/auth/health`\n\n**Status:** ✅ 100% Funcional\n\n**Acesso:** Público (não requer autenticação)\n\n**Resposta Esperada:**\n```json\n{\n  \"status\": \"UP\",\n  \"service\": \"Authentication Service\",\n  \"version\": \"1.0\"\n}\n```\n\n**Use Case:** Monitoramento de disponibilidade do serviço."
-			},
-			"response": []
-		},
-		{
-			"name": "2. Register - Novo Usuário",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Testes automatizados",
-							"pm.test(\"Status code is 201 Created\", function () {",
-							"    pm.response.to.have.status(201);",
-							"});",
-							"",
-							"pm.test(\"Response has correct structure\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('message');",
-							"    pm.expect(jsonData).to.have.property('user');",
-							"    pm.expect(jsonData.user).to.have.property('id');",
-							"    pm.expect(jsonData.user).to.have.property('username');",
-							"    pm.expect(jsonData.user).to.have.property('enabled');",
-							"});",
-							"",
-							"pm.test(\"Registration successful\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.message).to.include(\"sucesso\");",
-							"    pm.expect(jsonData.user.enabled).to.be.true;",
-							"});",
-							"",
-							"pm.test(\"User data is correct\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    var requestBody = JSON.parse(pm.request.body.raw);",
-							"    pm.expect(jsonData.user.username).to.eql(requestBody.username);",
-							"});",
-							"",
-							"// Salvar dados do usuário para próximos testes",
-							"if (pm.response.code === 201) {",
-							"    var jsonData = pm.response.json();",
-							"    pm.collectionVariables.set(\"userId\", jsonData.user.id);",
-							"    pm.collectionVariables.set(\"username\", jsonData.user.username);",
-							"    console.log(\"✅ Register: Usuário criado - ID: \" + jsonData.user.id);",
-							"}"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"// Gerar username único para evitar duplicação",
-							"var timestamp = new Date().getTime();",
-							"var username = \"testuser\" + timestamp;",
-							"pm.collectionVariables.set(\"testUsername\", username);",
-							"console.log(\"📝 Username gerado: \" + username);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/register",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"register"
-					]
-				},
-				"description": "Registra um novo usuário no sistema.\n\n**Endpoint:** `POST /api/auth/register`\n\n**Status:** ✅ 100% Funcional\n\n**Acesso:** Público\n\n**Body (JSON):**\n```json\n{\n  \"username\": \"testuser\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}\n```\n\n**Validações:**\n- ✅ Username único (3-50 caracteres)\n- ✅ Senha forte (8-100 caracteres):\n  - Pelo menos 1 maiúscula\n  - Pelo menos 1 minúscula\n  - Pelo menos 1 número\n  - Pelo menos 1 caractere especial\n- ✅ Confirmação de senha obrigatória\n- ✅ Senhas devem coincidir\n\n**Segurança:**\n- BCrypt força 12 para hash de senha\n- Username sanitizado para logs\n\n**Resposta Sucesso (201):**\n```json\n{\n  \"message\": \"Usuário registrado com sucesso\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"testuser\",\n    \"enabled\": true,\n    \"createdAt\": \"2025-10-12T03:16:09.222884\",\n    \"updatedAt\": \"2025-10-12T03:16:09.222884\"\n  }\n}\n```\n\n**Erros Comuns:**\n- 400: Username já existe\n- 400: Senhas não coincidem\n- 400: Senha fraca"
-			},
-			"response": []
-		},
-		{
-			"name": "3. Login - Autenticação",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Testes automatizados",
-							"pm.test(\"Status code is 200 OK\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Response has correct structure\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('message');",
-							"    pm.expect(jsonData).to.have.property('user');",
-							"    pm.expect(jsonData).to.have.property('sessionId');",
-							"    pm.expect(jsonData.user).to.have.property('id');",
-							"    pm.expect(jsonData.user).to.have.property('username');",
-							"});",
-							"",
-							"pm.test(\"Login successful\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.message).to.include(\"sucesso\");",
-							"    pm.expect(jsonData.user.enabled).to.be.true;",
-							"    pm.expect(jsonData.sessionId).to.exist;",
-							"});",
-							"",
-							"pm.test(\"Session cookie present\", function () {",
-							"    pm.expect(pm.cookies.has('JSESSIONID')).to.be.true;",
-							"});",
-							"",
-							"pm.test(\"User authenticated correctly\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    var requestBody = JSON.parse(pm.request.body.raw);",
-							"    pm.expect(jsonData.user.username).to.eql(requestBody.username);",
-							"});",
-							"",
-							"// Salvar sessionId para referência",
-							"if (pm.response.code === 200) {",
-							"    var jsonData = pm.response.json();",
-							"    pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
-							"    console.log(\"✅ Login: Autenticação bem-sucedida\");",
-							"    console.log(\"🔑 SessionId: \" + jsonData.sessionId);",
-							"}"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\"\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/login",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"login"
-					]
-				},
-				"description": "Autentica um usuário no sistema e cria sessão HTTP.\n\n**Endpoint:** `POST /api/auth/login`\n\n**Status:** ✅ 100% Funcional\n\n**Acesso:** Público\n\n**Body (JSON):**\n```json\n{\n  \"username\": \"testuser\",\n  \"password\": \"Test@1234\"\n}\n```\n\n**Segurança:**\n- ✅ Validação de senha via BCrypt\n- ✅ Spring Security AuthenticationManager\n- ✅ SecurityContext criado e persistido na sessão\n- ✅ Cookie JSESSIONID seguro\n\n**Resposta Sucesso (200):**\n```json\n{\n  \"message\": \"Login realizado com sucesso\",\n  \"sessionId\": \"96C2E33AAFAA927E86AEBD0B9F0AF24A\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"testuser\",\n    \"enabled\": true,\n    \"createdAt\": \"2025-10-12T03:16:09.222884\",\n    \"updatedAt\": \"2025-10-12T03:16:09.222884\"\n  }\n}\n```\n\n**Cookies:**\n- `JSESSIONID`: Cookie de sessão HTTP (gerenciado pelo Postman)\n\n**Erros Comuns:**\n- 401: Credenciais inválidas (username ou senha incorretos)\n- 401: Usuário não encontrado\n\n**Importante:** O cookie JSESSIONID é gerenciado automaticamente pelo Postman e será usado nos próximos endpoints."
-			},
-			"response": []
-		},
-		{
-			"name": "4. Me - Usuário Atual",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Testes automatizados",
-							"pm.test(\"Status code is 200 OK\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Response has correct structure\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('id');",
-							"    pm.expect(jsonData).to.have.property('username');",
-							"    pm.expect(jsonData).to.have.property('enabled');",
-							"    pm.expect(jsonData).to.have.property('createdAt');",
-							"    pm.expect(jsonData).to.have.property('updatedAt');",
-							"});",
-							"",
-							"pm.test(\"User is authenticated\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.enabled).to.be.true;",
-							"    pm.expect(jsonData.id).to.exist;",
-							"});",
-							"",
-							"pm.test(\"Session persisted correctly\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    var envUsername = pm.collectionVariables.get(\"username\");",
-							"    var envUserId = pm.collectionVariables.get(\"userId\");",
-							"    ",
-							"    if (envUsername) {",
-							"        pm.expect(jsonData.username).to.eql(envUsername);",
-							"    }",
-							"    if (envUserId) {",
-							"        pm.expect(jsonData.id).to.eql(parseInt(envUserId));",
-							"    }",
-							"});",
-							"",
-							"console.log(\"✅ Me: Dados do usuário autenticado recuperados\");",
-							"var jsonData = pm.response.json();",
-							"console.log(\"👤 Usuário: \" + jsonData.username);",
-							"console.log(\"🆔 ID: \" + jsonData.id);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/me",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"me"
-					]
-				},
-				"description": "Retorna dados do usuário atualmente autenticado.\n\n**Endpoint:** `GET /api/auth/me`\n\n**Status:** ✅ 100% Funcional (Problema de sessão RESOLVIDO)\n\n**Acesso:** Requer autenticação (após login)\n\n**Headers:**\n- Cookie: JSESSIONID (automático pelo Postman)\n\n**Pré-requisitos:**\n1. Usuário deve ter feito login via `/api/auth/login`\n2. Cookie JSESSIONID deve estar presente\n3. Sessão deve estar ativa\n\n**Resposta Sucesso (200):**\n```json\n{\n  \"id\": 1,\n  \"username\": \"testuser\",\n  \"enabled\": true,\n  \"createdAt\": \"2025-10-12T03:16:09.222884\",\n  \"updatedAt\": \"2025-10-12T03:16:09.222884\"\n}\n```\n\n**Erro Comum:**\n- 403 Forbidden: Usuário não autenticado ou sessão expirada\n  - **Solução:** Execute o endpoint `3. Login` primeiro\n\n**Implementação Técnica:**\n- SecurityContext recuperado da sessão HTTP via `HttpSessionSecurityContextRepository`\n- Spring Security valida autenticação automaticamente"
-			},
-			"response": []
-		},
-		{
-			"name": "5. Logout - Encerrar Sessão",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Testes automatizados",
-							"pm.test(\"Status code is 200 OK\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Response has correct structure\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('message');",
-							"});",
-							"",
-							"pm.test(\"Logout successful\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.message).to.include(\"sucesso\");",
-							"});",
-							"",
-							"// Limpar variáveis da collection",
-							"pm.collectionVariables.unset(\"sessionId\");",
-							"pm.collectionVariables.unset(\"userId\");",
-							"pm.collectionVariables.unset(\"username\");",
-							"pm.collectionVariables.unset(\"testUsername\");",
-							"",
-							"console.log(\"✅ Logout: Sessão encerrada com sucesso\");",
-							"console.log(\"🧹 Variáveis limpas\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/logout",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"logout"
-					]
-				},
-				"description": "Invalida a sessão atual do usuário.\n\n**Endpoint:** `POST /api/auth/logout`\n\n**Status:** ✅ 100% Funcional (Problema de sessão RESOLVIDO)\n\n**Acesso:** Requer autenticação (após login)\n\n**Headers:**\n- Cookie: JSESSIONID (automático pelo Postman)\n\n**Pré-requisitos:**\n1. Usuário deve estar autenticado\n2. Cookie JSESSIONID deve estar presente\n3. Sessão deve estar ativa\n\n**Ações Realizadas:**\n- ✅ Invalida sessão HTTP (`session.invalidate()`)\n- ✅ Remove SecurityContext\n- ✅ Cookie JSESSIONID é removido/invalidado\n\n**Resposta Sucesso (200):**\n```json\n{\n  \"message\": \"Logout realizado com sucesso\"\n}\n```\n\n**Erro Comum:**\n- 403 Forbidden: Usuário não autenticado ou sessão já expirada\n  - **Solução:** Execute o endpoint `3. Login` primeiro\n\n**Após Logout:**\n- Cookie JSESSIONID é invalidado\n- Tentativas de acessar `/me` retornarão 403\n- É necessário fazer login novamente para nova sessão"
-			},
-			"response": []
-		},
-		{
-			"name": "Validação - Username Duplicado",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Teste de validação",
-							"pm.test(\"Status code is 400 Bad Request\", function () {",
-							"    pm.response.to.have.status(400);",
-							"});",
-							"",
-							"pm.test(\"Error message indicates duplicate username\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('message');",
-							"    pm.expect(jsonData.message).to.include(\"já está em uso\");",
-							"});",
-							"",
-							"console.log(\"✅ Validação: Username duplicado detectado corretamente\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/register",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"register"
-					]
-				},
-				"description": "**TESTE DE VALIDAÇÃO:** Tenta registrar usuário com username já existente.\n\n**Objetivo:** Validar que o sistema rejeita usernames duplicados.\n\n**Pré-requisito:** Execute `2. Register` primeiro para criar o usuário.\n\n**Resposta Esperada (400):**\n```json\n{\n  \"timestamp\": \"2025-10-12T03:16:09.222Z\",\n  \"status\": 400,\n  \"error\": \"Bad Request\",\n  \"message\": \"Username 'testuser' já está em uso\",\n  \"path\": \"/api/auth/register\"\n}\n```"
-			},
-			"response": []
-		},
-		{
-			"name": "Validação - Senha Fraca",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Teste de validação",
-							"pm.test(\"Status code is 400 Bad Request\", function () {",
-							"    pm.response.to.have.status(400);",
-							"});",
-							"",
-							"pm.test(\"Error message indicates weak password\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('message');",
-							"    // Pode ser erro de validação de formato",
-							"    pm.expect(jsonData.message || jsonData.errors).to.exist;",
-							"});",
-							"",
-							"console.log(\"✅ Validação: Senha fraca detectada corretamente\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"username\": \"weakpasstest\",\n  \"password\": \"123\",\n  \"confirmPassword\": \"123\"\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/register",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"register"
-					]
-				},
-				"description": "**TESTE DE VALIDAÇÃO:** Tenta registrar usuário com senha fraca.\n\n**Objetivo:** Validar que o sistema rejeita senhas que não atendem aos requisitos de segurança.\n\n**Senha Testada:** \"123\" (muito curta, sem maiúsculas, sem especiais)\n\n**Requisitos de Senha:**\n- Mínimo 8 caracteres\n- Pelo menos 1 maiúscula\n- Pelo menos 1 minúscula\n- Pelo menos 1 número\n- Pelo menos 1 caractere especial\n\n**Resposta Esperada (400):**\n```json\n{\n  \"timestamp\": \"2025-10-12T03:16:09.222Z\",\n  \"status\": 400,\n  \"error\": \"Bad Request\",\n  \"message\": \"Password deve ter entre 8 e 100 caracteres\",\n  \"path\": \"/api/auth/register\"\n}\n```"
-			},
-			"response": []
-		},
-		{
-			"name": "Validação - Credenciais Inválidas",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"// Teste de validação",
-							"pm.test(\"Status code is 401 Unauthorized\", function () {",
-							"    pm.response.to.have.status(401);",
-							"});",
-							"",
-							"pm.test(\"Error message indicates bad credentials\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('message');",
-							"    pm.expect(jsonData.message.toLowerCase()).to.include(\"credenciais\");",
-							"});",
-							"",
-							"console.log(\"✅ Validação: Credenciais inválidas detectadas corretamente\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"username\": \"nonexistentuser\",\n  \"password\": \"WrongPassword@123\"\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/login",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"login"
-					]
-				},
-				"description": "**TESTE DE VALIDAÇÃO:** Tenta fazer login com credenciais inválidas.\n\n**Objetivo:** Validar que o sistema rejeita credenciais incorretas.\n\n**Resposta Esperada (401):**\n```json\n{\n  \"timestamp\": \"2025-10-12T03:16:09.222Z\",\n  \"status\": 401,\n  \"error\": \"Unauthorized\",\n  \"message\": \"Credenciais inválidas\",\n  \"path\": \"/api/auth/login\"\n}\n```"
-			},
-			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					"// Script global executado antes de cada requisição",
-					"console.log(\"🚀 Neuroefficiency Auth API - Collection Completa\");",
-					"console.log(\"📋 Fase 1: Sistema de Autenticação - 100% Completo\");",
-					"console.log(\"⏰\", new Date().toLocaleString('pt-BR'));",
-					"console.log(\"\");"
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					"// Script global executado após cada requisição",
-					"var statusCode = pm.response.code;",
-					"",
-					"if (statusCode >= 200 && statusCode < 300) {",
-					"    console.log(\"✅ Requisição bem-sucedida: \" + statusCode);",
-					"} else if (statusCode >= 400 && statusCode < 500) {",
-					"    console.log(\"⚠️ Erro do cliente: \" + statusCode);",
-					"} else if (statusCode >= 500) {",
-					"    console.log(\"❌ Erro do servidor: \" + statusCode);",
-					"}",
-					"console.log(\"\");"
-				]
-			}
-		},
-		{
-			"name": "6. Password Reset - Request",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Response has success field\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('success');",
-							"    pm.expect(jsonData.success).to.be.true;",
-							"});",
-							"",
-							"console.log(\"✅ Reset de senha solicitado\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Accept-Language",
-						"value": "pt-BR"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"email\": \"{{username}}@example.com\"\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/password-reset/request",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"password-reset",
-						"request"
-					]
-				},
-				"description": "Solicita reset de senha por email.\n\n**Features:**\n- Rate limiting (3/hora)\n- Anti-enumeração (sempre retorna 200)\n- Email multipart (HTML + texto)\n- i18n (pt-BR/en-US)\n\n**NOTA:** Abra MailHog (http://localhost:8025) para ver o email."
-			},
-			"response": []
-		},
-		{
-			"name": "7. Password Reset - Validate Token",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Token validation response\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('success');",
-							"    pm.expect(jsonData.data).to.have.property('valid');",
-							"});",
-							"",
-							"console.log(\"✅ Token validado\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/password-reset/validate-token/TOKEN_AQUI",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"password-reset",
-						"validate-token",
-						"TOKEN_AQUI"
-					]
-				},
-				"description": "Valida se um token de reset é válido.\n\n**INSTRUÇÕES:**\n1. Execute o endpoint 6 (Request)\n2. Abra MailHog: http://localhost:8025\n3. Copie o token do email (64 caracteres)\n4. Substitua TOKEN_AQUI na URL\n\n**Validações:**\n- Token existe\n- Não expirou (30 minutos)\n- Não foi usado"
-			},
-			"response": []
-		},
-		{
-			"name": "8. Password Reset - Confirm",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Password changed successfully\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData).to.have.property('success');",
-							"    pm.expect(jsonData.success).to.be.true;",
-							"});",
-							"",
-							"console.log(\"✅ Senha alterada com sucesso\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					},
-					{
-						"key": "Accept-Language",
-						"value": "pt-BR"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"token\": \"TOKEN_AQUI\",\n    \"newPassword\": \"NewPass@1234\",\n    \"confirmPassword\": \"NewPass@1234\"\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/password-reset/confirm",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"password-reset",
-						"confirm"
-					]
-				},
-				"description": "Confirma o reset de senha com novo password.\n\n**INSTRUÇÕES:**\n1. Copie o token do email (MailHog)\n2. Cole no campo \"token\"\n3. Execute\n\n**Validações:**\n- Token válido\n- Senhas coincidem\n- Senha forte (maiúscula + minúscula + número + especial)\n\n**Após executar:**\n- Token é invalidado\n- Email de confirmação é enviado\n- Login com senha antiga falha"
-			},
-			"response": []
-		},
-		{
-			"name": "9. Password Reset - Health Check",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"Service is UP\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.success).to.be.true;",
-							"    pm.expect(jsonData.data.status).to.eql(\"UP\");",
-							"});",
-							"",
-							"console.log(\"✅ Password Reset Service UP\");"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/api/auth/password-reset/health",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"auth",
-						"password-reset",
-						"health"
-					]
-				},
-				"description": "Health check do serviço de recuperação de senha."
-			},
-			"response": []
-		}
-	],
-	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "http://localhost:8082",
-			"type": "string"
-		},
-		{
-			"key": "testUsername",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "userId",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "username",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "sessionId",
-			"value": "",
-			"type": "string"
-		}
-	]
+    "info": {
+        "_postman_id": "neuro-auth-v2-2025-fase2",
+        "name": "Neuroefficiency Auth API v2.0",
+        "description": "Collection completa do sistema de autenticação Neuroefficiency com Recuperação de Senha.\n\n**Versão:** 2.0 (Fase 1 + Fase 2 Completas)\n**Status:**  100%% Completa e Funcional\n**Endpoints:** 9/9 (100%%)\n**Última Atualização:** 14/10/2025\n\n**Fase 1 - Autenticação (1-5):**\n-  Health Check\n-  Register (com email)\n-  Login\n-  Me\n-  Logout\n\n**Fase 2 - Recuperação de Senha (6-9):**\n-  Password Reset Request\n-  Validate Token\n-  Confirm Reset\n-  Password Reset Health\n\n**Segurança:**\n- BCrypt força 12 (senhas)\n- SHA-256 (tokens reset)\n- Rate limiting (3/hora)\n- Anti-enumeração\n- Auditoria LGPD",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Health Check",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Testes automatizados",
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has correct structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('status');",
+                            "    pm.expect(jsonData).to.have.property('service');",
+                            "    pm.expect(jsonData).to.have.property('version');",
+                            "});",
+                            "",
+                            "pm.test(\"Service is UP\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.status).to.eql(\"UP\");",
+                            "    pm.expect(jsonData.service).to.eql(\"Authentication Service\");",
+                            "});",
+                            "",
+                            "console.log(\"✅ Health Check: Sistema operacional\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/health",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "health"
+                    ]
+                },
+                "description": "Verifica se o serviço de autenticação está disponível e operacional.\n\n**Endpoint:** `GET /api/auth/health`\n\n**Status:** ✅ 100% Funcional\n\n**Acesso:** Público (não requer autenticação)\n\n**Resposta Esperada:**\n```json\n{\n  \"status\": \"UP\",\n  \"service\": \"Authentication Service\",\n  \"version\": \"1.0\"\n}\n```\n\n**Use Case:** Monitoramento de disponibilidade do serviço."
+            },
+            "response": []
+        },
+        {
+            "name": "2. Register - Novo Usuário",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Testes automatizados",
+                            "pm.test(\"Status code is 201 Created\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has correct structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData).to.have.property('user');",
+                            "    pm.expect(jsonData.user).to.have.property('id');",
+                            "    pm.expect(jsonData.user).to.have.property('username');",
+                            "    pm.expect(jsonData.user).to.have.property('enabled');",
+                            "});",
+                            "",
+                            "pm.test(\"Registration successful\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include(\"sucesso\");",
+                            "    pm.expect(jsonData.user.enabled).to.be.true;",
+                            "});",
+                            "",
+                            "pm.test(\"User data is correct\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    var requestBody = JSON.parse(pm.request.body.raw);",
+                            "    pm.expect(jsonData.user.username).to.eql(requestBody.username);",
+                            "});",
+                            "",
+                            "// Salvar dados do usuário para próximos testes",
+                            "if (pm.response.code === 201) {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.collectionVariables.set(\"userId\", jsonData.user.id);",
+                            "    pm.collectionVariables.set(\"username\", jsonData.user.username);",
+                            "    console.log(\"✅ Register: Usuário criado - ID: \" + jsonData.user.id);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "// Gerar username único para evitar duplicação",
+                            "var timestamp = new Date().getTime();",
+                            "var username = \"testuser\" + timestamp;",
+                            "pm.collectionVariables.set(\"testUsername\", username);",
+                            "console.log(\"📝 Username gerado: \" + username);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/register",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "register"
+                    ]
+                },
+                "description": "Registra um novo usuário no sistema.\n\n**Endpoint:** `POST /api/auth/register`\n\n**Status:** ✅ 100% Funcional\n\n**Acesso:** Público\n\n**Body (JSON):**\n```json\n{\n  \"username\": \"testuser\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}\n```\n\n**Validações:**\n- ✅ Username único (3-50 caracteres)\n- ✅ Senha forte (8-100 caracteres):\n  - Pelo menos 1 maiúscula\n  - Pelo menos 1 minúscula\n  - Pelo menos 1 número\n  - Pelo menos 1 caractere especial\n- ✅ Confirmação de senha obrigatória\n- ✅ Senhas devem coincidir\n\n**Segurança:**\n- BCrypt força 12 para hash de senha\n- Username sanitizado para logs\n\n**Resposta Sucesso (201):**\n```json\n{\n  \"message\": \"Usuário registrado com sucesso\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"testuser\",\n    \"enabled\": true,\n    \"createdAt\": \"2025-10-12T03:16:09.222884\",\n    \"updatedAt\": \"2025-10-12T03:16:09.222884\"\n  }\n}\n```\n\n**Erros Comuns:**\n- 400: Username já existe\n- 400: Senhas não coincidem\n- 400: Senha fraca"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Login - Autenticação",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Testes automatizados",
+                            "pm.test(\"Status code is 200 OK\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has correct structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData).to.have.property('user');",
+                            "    pm.expect(jsonData).to.have.property('sessionId');",
+                            "    pm.expect(jsonData.user).to.have.property('id');",
+                            "    pm.expect(jsonData.user).to.have.property('username');",
+                            "});",
+                            "",
+                            "pm.test(\"Login successful\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include(\"sucesso\");",
+                            "    pm.expect(jsonData.user.enabled).to.be.true;",
+                            "    pm.expect(jsonData.sessionId).to.exist;",
+                            "});",
+                            "",
+                            "pm.test(\"Session cookie present\", function () {",
+                            "    pm.expect(pm.cookies.has('JSESSIONID')).to.be.true;",
+                            "});",
+                            "",
+                            "pm.test(\"User authenticated correctly\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    var requestBody = JSON.parse(pm.request.body.raw);",
+                            "    pm.expect(jsonData.user.username).to.eql(requestBody.username);",
+                            "});",
+                            "",
+                            "// Salvar sessionId para referência",
+                            "if (pm.response.code === 200) {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.collectionVariables.set(\"sessionId\", jsonData.sessionId);",
+                            "    console.log(\"✅ Login: Autenticação bem-sucedida\");",
+                            "    console.log(\"🔑 SessionId: \" + jsonData.sessionId);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "login"
+                    ]
+                },
+                "description": "Autentica um usuário no sistema e cria sessão HTTP.\n\n**Endpoint:** `POST /api/auth/login`\n\n**Status:** ✅ 100% Funcional\n\n**Acesso:** Público\n\n**Body (JSON):**\n```json\n{\n  \"username\": \"testuser\",\n  \"password\": \"Test@1234\"\n}\n```\n\n**Segurança:**\n- ✅ Validação de senha via BCrypt\n- ✅ Spring Security AuthenticationManager\n- ✅ SecurityContext criado e persistido na sessão\n- ✅ Cookie JSESSIONID seguro\n\n**Resposta Sucesso (200):**\n```json\n{\n  \"message\": \"Login realizado com sucesso\",\n  \"sessionId\": \"96C2E33AAFAA927E86AEBD0B9F0AF24A\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"testuser\",\n    \"enabled\": true,\n    \"createdAt\": \"2025-10-12T03:16:09.222884\",\n    \"updatedAt\": \"2025-10-12T03:16:09.222884\"\n  }\n}\n```\n\n**Cookies:**\n- `JSESSIONID`: Cookie de sessão HTTP (gerenciado pelo Postman)\n\n**Erros Comuns:**\n- 401: Credenciais inválidas (username ou senha incorretos)\n- 401: Usuário não encontrado\n\n**Importante:** O cookie JSESSIONID é gerenciado automaticamente pelo Postman e será usado nos próximos endpoints."
+            },
+            "response": []
+        },
+        {
+            "name": "4. Me - Usuário Atual",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Testes automatizados",
+                            "pm.test(\"Status code is 200 OK\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has correct structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('id');",
+                            "    pm.expect(jsonData).to.have.property('username');",
+                            "    pm.expect(jsonData).to.have.property('enabled');",
+                            "    pm.expect(jsonData).to.have.property('createdAt');",
+                            "    pm.expect(jsonData).to.have.property('updatedAt');",
+                            "});",
+                            "",
+                            "pm.test(\"User is authenticated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.enabled).to.be.true;",
+                            "    pm.expect(jsonData.id).to.exist;",
+                            "});",
+                            "",
+                            "pm.test(\"Session persisted correctly\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    var envUsername = pm.collectionVariables.get(\"username\");",
+                            "    var envUserId = pm.collectionVariables.get(\"userId\");",
+                            "    ",
+                            "    if (envUsername) {",
+                            "        pm.expect(jsonData.username).to.eql(envUsername);",
+                            "    }",
+                            "    if (envUserId) {",
+                            "        pm.expect(jsonData.id).to.eql(parseInt(envUserId));",
+                            "    }",
+                            "});",
+                            "",
+                            "console.log(\"✅ Me: Dados do usuário autenticado recuperados\");",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"👤 Usuário: \" + jsonData.username);",
+                            "console.log(\"🆔 ID: \" + jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/me",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "me"
+                    ]
+                },
+                "description": "Retorna dados do usuário atualmente autenticado.\n\n**Endpoint:** `GET /api/auth/me`\n\n**Status:** ✅ 100% Funcional (Problema de sessão RESOLVIDO)\n\n**Acesso:** Requer autenticação (após login)\n\n**Headers:**\n- Cookie: JSESSIONID (automático pelo Postman)\n\n**Pré-requisitos:**\n1. Usuário deve ter feito login via `/api/auth/login`\n2. Cookie JSESSIONID deve estar presente\n3. Sessão deve estar ativa\n\n**Resposta Sucesso (200):**\n```json\n{\n  \"id\": 1,\n  \"username\": \"testuser\",\n  \"enabled\": true,\n  \"createdAt\": \"2025-10-12T03:16:09.222884\",\n  \"updatedAt\": \"2025-10-12T03:16:09.222884\"\n}\n```\n\n**Erro Comum:**\n- 403 Forbidden: Usuário não autenticado ou sessão expirada\n  - **Solução:** Execute o endpoint `3. Login` primeiro\n\n**Implementação Técnica:**\n- SecurityContext recuperado da sessão HTTP via `HttpSessionSecurityContextRepository`\n- Spring Security valida autenticação automaticamente"
+            },
+            "response": []
+        },
+        {
+            "name": "5. Logout - Encerrar Sessão",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Testes automatizados",
+                            "pm.test(\"Status code is 200 OK\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has correct structure\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "});",
+                            "",
+                            "pm.test(\"Logout successful\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include(\"sucesso\");",
+                            "});",
+                            "",
+                            "// Limpar variáveis da collection",
+                            "pm.collectionVariables.unset(\"sessionId\");",
+                            "pm.collectionVariables.unset(\"userId\");",
+                            "pm.collectionVariables.unset(\"username\");",
+                            "pm.collectionVariables.unset(\"testUsername\");",
+                            "",
+                            "console.log(\"✅ Logout: Sessão encerrada com sucesso\");",
+                            "console.log(\"🧹 Variáveis limpas\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/logout",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "logout"
+                    ]
+                },
+                "description": "Invalida a sessão atual do usuário.\n\n**Endpoint:** `POST /api/auth/logout`\n\n**Status:** ✅ 100% Funcional (Problema de sessão RESOLVIDO)\n\n**Acesso:** Requer autenticação (após login)\n\n**Headers:**\n- Cookie: JSESSIONID (automático pelo Postman)\n\n**Pré-requisitos:**\n1. Usuário deve estar autenticado\n2. Cookie JSESSIONID deve estar presente\n3. Sessão deve estar ativa\n\n**Ações Realizadas:**\n- ✅ Invalida sessão HTTP (`session.invalidate()`)\n- ✅ Remove SecurityContext\n- ✅ Cookie JSESSIONID é removido/invalidado\n\n**Resposta Sucesso (200):**\n```json\n{\n  \"message\": \"Logout realizado com sucesso\"\n}\n```\n\n**Erro Comum:**\n- 403 Forbidden: Usuário não autenticado ou sessão já expirada\n  - **Solução:** Execute o endpoint `3. Login` primeiro\n\n**Após Logout:**\n- Cookie JSESSIONID é invalidado\n- Tentativas de acessar `/me` retornarão 403\n- É necessário fazer login novamente para nova sessão"
+            },
+            "response": []
+        },
+        {
+            "name": "Validação - Username Duplicado",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Teste de validação",
+                            "pm.test(\"Status code is 400 Bad Request\", function () {",
+                            "    pm.response.to.have.status(400);",
+                            "});",
+                            "",
+                            "pm.test(\"Error message indicates duplicate username\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData.message).to.include(\"já está em uso\");",
+                            "});",
+                            "",
+                            "console.log(\"✅ Validação: Username duplicado detectado corretamente\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/register",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "register"
+                    ]
+                },
+                "description": "**TESTE DE VALIDAÇÃO:** Tenta registrar usuário com username já existente.\n\n**Objetivo:** Validar que o sistema rejeita usernames duplicados.\n\n**Pré-requisito:** Execute `2. Register` primeiro para criar o usuário.\n\n**Resposta Esperada (400):**\n```json\n{\n  \"timestamp\": \"2025-10-12T03:16:09.222Z\",\n  \"status\": 400,\n  \"error\": \"Bad Request\",\n  \"message\": \"Username 'testuser' já está em uso\",\n  \"path\": \"/api/auth/register\"\n}\n```"
+            },
+            "response": []
+        },
+        {
+            "name": "Validação - Senha Fraca",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Teste de validação",
+                            "pm.test(\"Status code is 400 Bad Request\", function () {",
+                            "    pm.response.to.have.status(400);",
+                            "});",
+                            "",
+                            "pm.test(\"Error message indicates weak password\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    // Pode ser erro de validação de formato",
+                            "    pm.expect(jsonData.message || jsonData.errors).to.exist;",
+                            "});",
+                            "",
+                            "console.log(\"✅ Validação: Senha fraca detectada corretamente\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"weakpasstest\",\n  \"password\": \"123\",\n  \"confirmPassword\": \"123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/register",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "register"
+                    ]
+                },
+                "description": "**TESTE DE VALIDAÇÃO:** Tenta registrar usuário com senha fraca.\n\n**Objetivo:** Validar que o sistema rejeita senhas que não atendem aos requisitos de segurança.\n\n**Senha Testada:** \"123\" (muito curta, sem maiúsculas, sem especiais)\n\n**Requisitos de Senha:**\n- Mínimo 8 caracteres\n- Pelo menos 1 maiúscula\n- Pelo menos 1 minúscula\n- Pelo menos 1 número\n- Pelo menos 1 caractere especial\n\n**Resposta Esperada (400):**\n```json\n{\n  \"timestamp\": \"2025-10-12T03:16:09.222Z\",\n  \"status\": 400,\n  \"error\": \"Bad Request\",\n  \"message\": \"Password deve ter entre 8 e 100 caracteres\",\n  \"path\": \"/api/auth/register\"\n}\n```"
+            },
+            "response": []
+        },
+        {
+            "name": "Validação - Credenciais Inválidas",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Teste de validação",
+                            "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                            "    pm.response.to.have.status(401);",
+                            "});",
+                            "",
+                            "pm.test(\"Error message indicates bad credentials\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData.message.toLowerCase()).to.include(\"credenciais\");",
+                            "});",
+                            "",
+                            "console.log(\"✅ Validação: Credenciais inválidas detectadas corretamente\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"username\": \"nonexistentuser\",\n  \"password\": \"WrongPassword@123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/login",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "login"
+                    ]
+                },
+                "description": "**TESTE DE VALIDAÇÃO:** Tenta fazer login com credenciais inválidas.\n\n**Objetivo:** Validar que o sistema rejeita credenciais incorretas.\n\n**Resposta Esperada (401):**\n```json\n{\n  \"timestamp\": \"2025-10-12T03:16:09.222Z\",\n  \"status\": 401,\n  \"error\": \"Unauthorized\",\n  \"message\": \"Credenciais inválidas\",\n  \"path\": \"/api/auth/login\"\n}\n```"
+            },
+            "response": []
+        },
+        {
+            "name": "6. Password Reset - Request",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept-Language",
+                        "value": "pt-BR"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"{{username}}@example.com\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/password-reset/request",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "password-reset",
+                        "request"
+                    ]
+                },
+                "description": "Solicita reset de senha por email.\\n\\n**Requisito:** MailHog rodando em localhost:8025"
+            },
+            "response": [],
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has success field\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('success');",
+                            "    pm.expect(jsonData.success).to.be.true;",
+                            "});",
+                            "",
+                            "console.log(\"✅ Reset de senha solicitado\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Password Reset - Validate Token",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/password-reset/validate-token/TOKEN_AQUI",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "password-reset",
+                        "validate-token",
+                        "TOKEN_AQUI"
+                    ]
+                },
+                "description": "Valida token de reset.\\n\\n**INSTRUÇÕES:**\\n1. Execute endpoint 6\\n2. Abra MailHog (http://localhost:8025)\\n3. Copie o token (64 chars)\\n4. Substitua TOKEN_AQUI na URL"
+            },
+            "response": [],
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Token validation response\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('success');",
+                            "    pm.expect(jsonData.data).to.have.property('valid');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Token validado\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "8. Password Reset - Confirm",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept-Language",
+                        "value": "pt-BR"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"token\": \"TOKEN_AQUI\",\n    \"newPassword\": \"NewPass@1234\",\n    \"confirmPassword\": \"NewPass@1234\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/password-reset/confirm",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "password-reset",
+                        "confirm"
+                    ]
+                },
+                "description": "Confirma reset com nova senha.\\n\\n**INSTRUÇÕES:**\\n1. Copie token do MailHog\\n2. Cole no campo token\\n3. Execute"
+            },
+            "response": [],
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Password changed successfully\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('success');",
+                            "    pm.expect(jsonData.success).to.be.true;",
+                            "});",
+                            "",
+                            "console.log(\"✅ Senha alterada\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Password Reset - Health",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/auth/password-reset/health",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "api",
+                        "auth",
+                        "password-reset",
+                        "health"
+                    ]
+                },
+                "description": "Health check do serviço de password reset"
+            },
+            "response": [],
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Service is UP\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.success).to.be.true;",
+                            "    pm.expect(jsonData.data.status).to.eql(\"UP\");",
+                            "});",
+                            "",
+                            "console.log(\"✅ Password Reset Service UP\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Script global executado antes de cada requisição",
+                    "console.log(\"🚀 Neuroefficiency Auth API - Collection Completa\");",
+                    "console.log(\"📋 Fase 1: Sistema de Autenticação - 100% Completo\");",
+                    "console.log(\"⏰\", new Date().toLocaleString('pt-BR'));",
+                    "console.log(\"\");"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Script global executado após cada requisição",
+                    "var statusCode = pm.response.code;",
+                    "",
+                    "if (statusCode >= 200 && statusCode < 300) {",
+                    "    console.log(\"✅ Requisição bem-sucedida: \" + statusCode);",
+                    "} else if (statusCode >= 400 && statusCode < 500) {",
+                    "    console.log(\"⚠️ Erro do cliente: \" + statusCode);",
+                    "} else if (statusCode >= 500) {",
+                    "    console.log(\"❌ Erro do servidor: \" + statusCode);",
+                    "}",
+                    "console.log(\"\");"
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8082",
+            "type": "string"
+        },
+        {
+            "key": "testUsername",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "username",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "sessionId",
+            "value": "",
+            "type": "string"
+        }
+    ]
 }
-
