@@ -29,7 +29,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * Responsável por gerenciar o registro e login de usuários.
  * 
  * @author Joao Fuhrmann
- * @version 1.0
+ * @version 2.0 - Adicionado suporte a email no registro (Tarefa 2)
  * @since 2025-10-11
  */
 @Service
@@ -71,9 +71,16 @@ public class AuthenticationService {
             );
         }
 
+        // TAREFA 2: Verificar se o email já existe
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            log.warn("Tentativa de registro com email já existente");
+            throw new IllegalArgumentException("Email já está em uso");
+        }
+
         // Criar novo usuário
         Usuario usuario = Usuario.builder()
                 .username(request.getUsername())
+                .email(request.getEmail().toLowerCase().trim())  // TAREFA 2: adicionar email
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .enabled(true)
                 .accountNonExpired(true)
