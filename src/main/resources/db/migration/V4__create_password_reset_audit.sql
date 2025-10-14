@@ -13,7 +13,7 @@ CREATE TABLE password_reset_audit (
     event_type VARCHAR(50) NOT NULL,
     success BOOLEAN NOT NULL,
     error_message TEXT,
-    timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
     
     CONSTRAINT pk_password_reset_audit PRIMARY KEY (id)
 );

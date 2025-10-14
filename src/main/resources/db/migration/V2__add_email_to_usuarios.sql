@@ -5,16 +5,15 @@
 -- Estratégia: Email opcional para usuários legacy da Fase 1
 -- ===================================================================
 
--- Adicionar coluna email (NULLABLE temporariamente para não quebrar registros existentes)
+-- Adicionar coluna email (NULLABLE para não quebrar registros existentes)
 ALTER TABLE usuarios ADD COLUMN email VARCHAR(255);
 
--- Criar índice parcial único (só para emails não-nulos)
--- Permite que usuários antigos não tenham email, mas novos devem ter
-CREATE UNIQUE INDEX uk_usuarios_email ON usuarios(email) WHERE email IS NOT NULL;
+-- Criar índice único
+-- NOTA: H2 não suporta partial indexes (WHERE clause)
+-- H2 permite múltiplos NULL em UNIQUE INDEX automaticamente
+-- Compatível com H2 e PostgreSQL
+CREATE UNIQUE INDEX uk_usuarios_email ON usuarios(email);
 
--- Criar índice para performance em buscas
-CREATE INDEX idx_usuarios_email ON usuarios(email);
-
--- Comentário descritivo
+-- Comentário descritivo (H2 2.x suporta COMMENT)
 COMMENT ON COLUMN usuarios.email IS 'Email do usuário (obrigatório para novos registros, opcional para usuários legacy da Fase 1)';
 
