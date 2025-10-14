@@ -90,6 +90,28 @@
 		<optional>true</optional>
 	</dependency>
 
+	<!-- ========================================= -->
+	<!-- TAREFA 2: Recuperação de Senha por Email -->
+	<!-- ========================================= -->
+
+	<!-- Email -->
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-mail</artifactId>
+	</dependency>
+
+	<!-- Templates Thymeleaf para emails -->
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-thymeleaf</artifactId>
+	</dependency>
+
+	<!-- Apache Commons Codec (SHA-256 para tokens) -->
+	<dependency>
+		<groupId>commons-codec</groupId>
+		<artifactId>commons-codec</artifactId>
+	</dependency>
+
 	<!-- Testes -->
 	<dependency>
 		<groupId>org.springframework.boot</groupId>
