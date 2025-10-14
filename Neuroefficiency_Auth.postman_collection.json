@@ -123,7 +123,7 @@
                 ],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+                    "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"email\": \"{{testUsername}}@example.com\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/auth/register",
@@ -359,6 +359,24 @@
                         ],
                         "type": "text/javascript"
                     }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "exec": [
+                            "// Usar o mesmo username do endpoint anterior (Register)",
+                            "// Este endpoint testa username duplicado, então deve usar o username já registrado",
+                            "var username = pm.collectionVariables.get(\"testUsername\");",
+                            "if (!username) {",
+                            "    // Se não existe, gerar um novo",
+                            "    var timestamp = new Date().getTime();",
+                            "    username = \"testuser\" + timestamp;",
+                            "    pm.collectionVariables.set(\"testUsername\", username);",
+                            "}",
+                            "console.log(\"📝 Usando username: \" + username + \" (deve estar duplicado)\");"
+                        ],
+                        "type": "text/javascript"
+                    }
                 }
             ],
             "request": {
@@ -371,7 +389,7 @@
                 ],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+                    "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"email\": \"{{testUsername}}@example.com\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/auth/register",
@@ -423,7 +441,7 @@
                 ],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n  \"username\": \"weakpasstest\",\n  \"password\": \"123\",\n  \"confirmPassword\": \"123\"\n}"
+                    "raw": "{\n  \"username\": \"weakpasstest\",\n  \"email\": \"weak@example.com\",\n  \"password\": \"123\",\n  \"confirmPassword\": \"123\"\n}"
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/auth/register",
@@ -507,7 +525,7 @@
                 ],
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n    \"email\": \"{{username}}@example.com\"\n}"
+                    "raw": "{\n    \"email\": \"{{testUsername}}@example.com\"\n}"
                 },
                 "url": {
                     "raw": "{{baseUrl}}/api/auth/password-reset/request",
