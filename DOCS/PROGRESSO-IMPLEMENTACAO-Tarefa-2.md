@@ -188,58 +188,159 @@ Versão: 1.0 → 2.0
 - ✅ domain/model/Usuario.java (atualizado)
 - ✅ domain/repository/UsuarioRepository.java (atualizado)
 
-### Status: 🔄 **PARCIAL - Faltam entidades e repositories**
+### Status: ✅ **COMPLETA E COMMITADA**
+
+### Arquivos Adicionais Criados (5):
+- ✅ domain/enums/AuditEventType.java (novo)
+- ✅ domain/model/PasswordResetToken.java (novo)
+- ✅ domain/model/PasswordResetAudit.java (novo)
+- ✅ domain/repository/PasswordResetTokenRepository.java (novo)
+- ✅ domain/repository/PasswordResetAuditRepository.java (novo)
+- ✅ DOCS/PROGRESSO-IMPLEMENTACAO-Tarefa-2.md (novo)
+
+### Detalhes das Entidades Criadas:
+
+#### **PasswordResetToken.java**
+```
+Campos:
+   - id (PK)
+   - tokenHash (SHA-256, 64 chars, unique)
+   - usuario (FK lazy)
+   - expiresAt (30min)
+   - usedAt (nullable)
+   - createdAt (audit)
+
+Métodos úteis:
+   - isExpired(): boolean
+   - isUsed(): boolean
+   - isValid(): boolean (não expirado E não usado)
+   - markAsUsed(): void
+
+Regras de negócio:
+   ✅ Tokens expiram em 30 minutos
+   ✅ Uso único (usedAt marca como usado)
+   ✅ SHA-256 para permitir lookup direto
+```
+
+#### **AuditEventType.java (enum)**
+```
+Valores:
+   - REQUEST: Solicitação de reset
+   - SUCCESS: Reset bem-sucedido
+   - FAILURE: Falha no reset
+   - EXPIRED_TOKEN: Token expirado
+   - INVALID_TOKEN: Token inválido/usado
+   - RATE_LIMIT: Bloqueio por abuso
+```
+
+#### **PasswordResetAudit.java**
+```
+Campos:
+   - id (PK)
+   - email (sempre logado)
+   - ipAddress (IPv4/IPv6)
+   - userAgent (browser info)
+   - eventType (enum)
+   - success (boolean)
+   - errorMessage (nullable)
+   - timestamp
+
+Métodos úteis:
+   - sanitizeEmail(): String (oculta parte do email em logs)
+
+Propósito:
+   ✅ Compliance LGPD
+   ✅ Rate limiting (3/hora por email/IP)
+   ✅ Análise de segurança
+   ✅ Detecção de ataques
+```
+
+#### **PasswordResetTokenRepository.java**
+```
+Métodos principais:
+   - findByTokenHash(String): Optional<Token>
+   - findActiveTokensByUsuarioId(Long, LocalDateTime): List<Token>
+   - invalidateAllByUsuarioId(Long, LocalDateTime): int
+   - deleteExpiredOrUsed(LocalDateTime): int (cleanup job)
+   - countByUsuarioIdAndCreatedAtAfter(Long, LocalDateTime): long
+
+❗ IMPORTANTE: findByTokenHash funciona porque SHA-256 é determinístico
+```
+
+#### **PasswordResetAuditRepository.java**
+```
+Métodos principais:
+   - countByEmailAndTimestampAfter(String, LocalDateTime): long
+   - countByIpAddressAndTimestampAfter(String, LocalDateTime): long
+   - findByEmailOrderByTimestampDesc(String, Pageable): List<Audit>
+   - countSuccessfulResetsAfter(LocalDateTime): long
+   - countFailedAttemptsAfter(LocalDateTime): long
+   - findTopAttackerIPs(LocalDateTime, Pageable): List<Object[]>
+   - deleteOldAudits(LocalDateTime): int (cleanup LGPD)
+
+Uso:
+   ✅ Rate limiting: countBy...AndTimestampAfter(email/ip, 1hora)
+   ✅ Métricas: count...After(periodo)
+   ✅ Segurança: findTopAttackerIPs()
+```
 
 ---
 
-## 🔄 PRÓXIMAS AÇÕES (Em execução)
+## ✅ ETAPA 3: DTOs E EXCEPTIONS (PRÓXIMA)
 
-### ⏳ Criar Entidades JPA
+**Status:** ⏳ **PENDENTE**
 
-**Pendente:**
-1. [ ] PasswordResetToken.java
-2. [ ] PasswordResetAudit.java
-3. [ ] AuditEventType.java (enum)
+### O que será criado:
 
-**Estimativa:** 15 minutos
+#### DTOs de Request:
+1. [ ] PasswordResetRequestDto.java (email)
+2. [ ] PasswordResetConfirmDto.java (token, newPassword, confirmPassword)
 
----
+#### DTOs de Response:
+3. [ ] ApiResponse<T>.java (wrapper padrão)
+4. [ ] PasswordResetResponseDto.java
+5. [ ] TokenValidationResponseDto.java
 
-### ⏳ Criar Repositories
+#### Exceptions Customizadas:
+6. [ ] TokenExpiredException.java
+7. [ ] TokenInvalidException.java
+8. [ ] RateLimitExceededException.java
+9. [ ] EmailNotFoundException.java (pode não existir devido anti-enumeração)
 
-**Pendente:**
-1. [ ] PasswordResetTokenRepository.java
-2. [ ] PasswordResetAuditRepository.java
+#### Atualização de DTOs Existentes:
+10. [ ] RegisterRequest.java (adicionar campo email)
+11. [ ] UserResponse.java (adicionar campo email)
 
-**Estimativa:** 10 minutos
+**Estimativa:** 20 minutos
 
 ---
 
 ## 📊 MÉTRICAS DE PROGRESSO
 
-### Commits Realizados: **2**
+### Commits Realizados: **3**
 1. ✅ Etapa 1 - Infraestrutura (6 arquivos)
-2. ✅ Etapa 2 Parcial - Estrutura Base (6 arquivos)
+2. ✅ Etapa 2 Parcial - Migrations e Usuario (6 arquivos)
+3. ✅ Etapa 2 COMPLETA - Entidades e Repositories (6 arquivos)
 
-### Arquivos Criados: **9**
+### Arquivos Criados: **15**
 ### Arquivos Modificados: **3**
-### Linhas de Código: **~500**
+### Linhas de Código: **~1.400**
 
-### TODOs Completados: **3/12** (25%)
+### TODOs Completados: **5/12** (42%)
 - ✅ Análise e Planejamento
 - ✅ Configurar MailHog e dependências
-- ✅ Adicionar campo email
+- ✅ Adicionar campo email à entidade Usuario
+- ✅ Criar entidade PasswordResetToken + repository
+- ✅ Criar entidade PasswordResetAudit + repository
 
-### TODOs Pendentes: **9/12** (75%)
-- 🔄 Criar entidade PasswordResetToken (em andamento)
-- ⏳ Criar entidade PasswordResetAudit
-- ⏳ Implementar EmailService
-- ⏳ Implementar PasswordResetService
-- ⏳ Criar endpoints REST
-- ⏳ Adaptar responses
-- ⏳ Testes unitários
-- ⏳ Testes integração
-- ⏳ Atualizar documentação
+### TODOs Pendentes: **7/12** (58%)
+- ⏳ Implementar EmailService com templates multipart (i18n)
+- ⏳ Implementar PasswordResetService com proteções anti-abuso
+- ⏳ Criar endpoints REST: /password-reset/request e /confirm
+- ⏳ Adaptar responses do backend para formato do frontend
+- ⏳ Criar testes unitários (services)
+- ⏳ Criar testes de integração (controllers + fluxo completo)
+- ⏳ Atualizar Postman Collection e documentação
 
 ---
 
@@ -315,7 +416,7 @@ Versão: 1.0 → 2.0
 
 ---
 
-**Última Atualização:** 14/10/2025 20:20  
-**Próxima Atualização:** Após commit da Etapa 2 completa  
+**Última Atualização:** 14/10/2025 20:30 (Commit `95ec63b`)  
+**Próxima Atualização:** Após DTOs e Exceptions (Etapa 3)  
 **Responsável:** AI Assistant + Rafael (Product Owner)
 
