@@ -13,7 +13,7 @@ import java.util.Optional;
  * Fornece operações de acesso a dados para usuários do sistema.
  * 
  * @author Joao Fuhrmann
- * @version 1.0
+ * @version 2.0 - Adicionados métodos de busca por email (Tarefa 2)
  * @since 2025-10-11
  */
 @Repository
@@ -50,5 +50,34 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * @return número de usuários com enabled = true
      */
     long countByEnabledTrue();
+
+    // ========================================
+    // TAREFA 2: Métodos de busca por email
+    // ========================================
+
+    /**
+     * Busca um usuário por email
+     * 
+     * @param email o email do usuário
+     * @return Optional contendo o usuário se encontrado
+     */
+    Optional<Usuario> findByEmail(String email);
+
+    /**
+     * Verifica se existe um usuário com o email informado
+     * 
+     * @param email o email a ser verificado
+     * @return true se o email já existe, false caso contrário
+     */
+    boolean existsByEmail(String email);
+
+    /**
+     * Busca um usuário por email ignorando diferença entre maiúsculas e minúsculas
+     * 
+     * @param email o email do usuário
+     * @return Optional contendo o usuário se encontrado
+     */
+    @Query("SELECT u FROM Usuario u WHERE LOWER(u.email) = LOWER(?1)")
+    Optional<Usuario> findByEmailIgnoreCase(String email);
 }
 
