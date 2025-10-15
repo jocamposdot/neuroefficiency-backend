@@ -1026,6 +1026,51 @@ Tests run: 16, Failures: 3, Errors: 0, Skipped: 0
 
 ---
 
+## 🏗️ PRINCÍPIOS ARQUITETURAIS DO PROJETO
+
+### **1. FOUNDATION FIRST** 🎯 **NOVO PRINCÍPIO**
+**"Construir base sólida antes de otimizações"**
+
+**Definição:**
+Priorizar funcionalidades que criam uma base estável e robusta antes de implementar otimizações, melhorias de performance ou funcionalidades complexas.
+
+**Aplicação Prática:**
+- ✅ **Fase 1:** Autenticação básica (base sólida)
+- ✅ **Fase 2:** Recuperação de senha (funcionalidade crítica)
+- ⏳ **Fase 3:** RBAC (controle granular sobre base estável)
+- ⏳ **Fase 4:** Rate Limiting (otimização sobre sistema robusto)
+
+**Benefícios:**
+- 🛡️ **Menor risco** de quebrar funcionalidades existentes
+- 🎯 **Maior valor** entregue ao usuário
+- 🔧 **Facilita manutenção** e evolução futura
+- 📈 **Permite iterações** mais seguras e previsíveis
+
+**Exemplo de Aplicação:**
+```
+❌ Implementar RBAC antes de ter autenticação estável
+✅ Implementar autenticação estável → depois RBAC
+
+❌ Implementar rate limiting global antes de ter endpoints funcionais
+✅ Implementar endpoints funcionais → depois rate limiting
+```
+
+### **2. MINIMALMENTE INVASIVO**
+**"Não quebrar o que já funciona"**
+
+### **3. GRADUALIDADE**
+**"Implementação incremental, testada a cada etapa"**
+
+### **4. ESCALABILIDADE**
+**"Código preparado para crescer"**
+
+### **5. EXTENSIBILIDADE**
+**"Fácil adicionar novas funcionalidades"**
+
+**📋 Documentação Completa:** Ver [PRINCIPIOS-ARQUITETURAIS.md](PRINCIPIOS-ARQUITETURAIS.md)
+
+---
+
 ## 📞 REFERÊNCIAS
 
 ### **Documentação Oficial:**
