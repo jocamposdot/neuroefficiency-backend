@@ -25,7 +25,7 @@
 
 ### **Para Testar a API:**
 👉 **[DOCS/GUIA_POSTMAN.md](DOCS/GUIA_POSTMAN.md)** - Importar collection e testar  
-📄 **Collection:** `Neuroefficiency_Auth.postman_collection.json` (v1.1)
+📄 **Collection:** `Neuroefficiency_Auth.postman_collection.json` (v2.0))
 
 ### **Para Desenvolvedores:**
 👉 **[DOCS/GUIA_TÉCNICO_COMPLETO.md](DOCS/GUIA_TÉCNICO_COMPLETO.md)** ⭐ Guia técnico completo
@@ -41,7 +41,7 @@
 |---------|-------|
 | **Fase Atual** | Fase 2 - Recuperação de Senha |
 | **Progresso** | ✅ 100% Completo |
-| **Endpoints** | 9/9 (100%) |
+| **Endpoints** | 12/12 (100%) |
 | **Testes** | 10/10 E2E passando (100%) |
 | **Classes Java** | 30 |
 | **Linhas de Código** | ~3.700 |
@@ -241,8 +241,8 @@ Retorna: Status do serviço de recuperação de senha
 **Tipo:** Guia da Collection Postman | **Tamanho:** ~532 linhas
 
 **Conteúdo:**
-- ✅ Guia completo da collection v1.1
-- ✅ 8 endpoints documentados (5 funcionais + 3 validações)
+- ✅ Guia completo da collection v2.0
+- ✅ 12 endpoints documentados (5 Fase 1 + 4 Fase 2 + 3 validações)
 - ✅ Testes automatizados (21 testes)
 - ✅ Variáveis de collection
 - ✅ Troubleshooting específico do Postman
@@ -503,7 +503,7 @@ neuro-core/
 
 ### **Versão 3.0 - 14/10/2025** 🆕
 - ✅ **FASE 2 - RECUPERAÇÃO DE SENHA - 100% COMPLETA** 🎉
-- ✅ 4 novos endpoints de password reset (9 endpoints totais)
+- ✅ 4 novos endpoints de password reset (12 endpoints totais: 5 Fase 1 + 4 Fase 2 + 3 Validações)
 - ✅ Email multipart com templates Thymeleaf (HTML + texto)
 - ✅ Internacionalização (pt-BR/en-US)
 - ✅ Rate limiting (3 tentativas/hora)
@@ -519,7 +519,7 @@ neuro-core/
 - ✅ **FASE 1 - 100% COMPLETA** 🎉
 - ✅ Endpoint `/me` corrigido (persistência de sessão)
 - ✅ Todos os 5 endpoints funcionais (5/5)
-- ✅ Collection Postman v1.1 atualizada
+- ✅ Collection Postman v2.0 atualizada
 - ✅ Documentação atualizada para refletir 100%
 
 ### **Versão 2.0 - 12/10/2025**
@@ -552,7 +552,7 @@ neuro-core/
 
 **Sistema de Autenticação - Fase 2 Completa:**
 - ✅ **100% Completo e Funcional**
-- ✅ **9/9 endpoints operacionais**
+- ✅ **12/12 endpoints operacionais**
 - ✅ **10/10 testes E2E passando**
 - ✅ **Recuperação de senha com email**
 - ✅ **Rate limiting e anti-enumeração**

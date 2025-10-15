@@ -2,7 +2,7 @@
 
 **Versão Collection:** 2.0 (Fase 1 + Fase 2)  
 **Status:** ✅ 100% Funcional  
-**Endpoints:** 9/9 (5 Auth + 4 Password Reset)  
+**Endpoints:** 12/12 (5 Auth + 4 Password Reset + 3 Validações)  
 **Última Atualização:** 14 de Outubro de 2025
 
 ---
@@ -834,7 +834,7 @@ Após testar a collection, você pode:
 
 A collection Postman **Neuroefficiency Auth API v2.0** está:
 
-- ✅ **100% Funcional** - Todos os 9 endpoints operacionais
+- ✅ **100% Funcional** - Todos os 12 endpoints operacionais (5 Fase 1 + 4 Fase 2 + 3 Validações)
 - ✅ **Fase 1 Completa** - Autenticação básica (5 endpoints)
 - ✅ **Fase 2 Completa** - Recuperação de senha (4 endpoints)
 - ✅ **Zero Configuração** - Variáveis internas, sem environment necessário

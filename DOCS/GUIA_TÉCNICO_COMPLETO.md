@@ -254,7 +254,7 @@ void shouldLoginSuccessfully() {
 
 ## 4️⃣ GUIA DO POSTMAN
 
-### **📦 Collection: Neuroefficiency_Auth.postman_collection.json (v1.1)**
+### **📦 Collection: Neuroefficiency_Auth.postman_collection.json (v2.0)**
 
 ### **Importação:**
 1. Abrir Postman

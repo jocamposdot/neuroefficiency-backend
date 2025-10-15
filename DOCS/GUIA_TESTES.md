@@ -3,7 +3,7 @@
 
 **Versão:** 3.0 (Fase 2)  
 **Última Atualização:** 14 de Outubro de 2025  
-**Cobertura:** 9 endpoints, 10 cenários E2E
+**Cobertura:** 12 endpoints, 10 cenários E2E
 
 ---
 
@@ -20,7 +20,7 @@
 ### Endpoints Testados
 - ✅ 5 endpoints de autenticação (Fase 1)
 - ✅ 4 endpoints de recuperação de senha (Fase 2)
-- ✅ **Total:** 9 endpoints (100%)
+- ✅ **Total:** 12 endpoints (100%)
 
 ---
 
@@ -422,7 +422,7 @@ docker restart mailhog
 ### Importar Collection
 ```
 Arquivo: Neuroefficiency_Auth.postman_collection.json
-Versão: 2.0 (9 endpoints)
+Versão: 2.0 (12 endpoints)
 ```
 
 ### Executar Todos os Testes

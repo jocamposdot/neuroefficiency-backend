@@ -292,7 +292,7 @@
                     "script": {
                         "exec": [
                             "// Testes automatizados",
-                            "pm.test(\"Status code is 200 OK\", function () {",
+                            "pm.test(\"Status code is 200\", function () {",
                             "    pm.response.to.have.status(200);",
                             "});",
                             "",
@@ -306,14 +306,14 @@
                             "    pm.expect(jsonData.message).to.include(\"sucesso\");",
                             "});",
                             "",
-                            "// Limpar variáveis da collection",
+                            "// Limpar apenas sessionId (sessão encerrada)",
+                            "// userId também é limpo pois é referência à sessão ativa",
+                            "// MANTEMOS testUsername e username para testes de validação posteriores",
                             "pm.collectionVariables.unset(\"sessionId\");",
                             "pm.collectionVariables.unset(\"userId\");",
-                            "pm.collectionVariables.unset(\"username\");",
-                            "pm.collectionVariables.unset(\"testUsername\");",
                             "",
                             "console.log(\"✅ Logout: Sessão encerrada com sucesso\");",
-                            "console.log(\"🧹 Variáveis limpas\");"
+                            "console.log(\"🧹 SessionId e UserId limpos (testUsername mantido para validações)\");"
                         ],
                         "type": "text/javascript"
                     }

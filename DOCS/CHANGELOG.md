@@ -127,7 +127,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 #### 📚 Modificado
 - `SecurityConfig` - Configurado `securityContextRepository`
 - `GUIA_TÉCNICO_COMPLETO.md` - Atualizado status
-- Collection Postman v1.1 - Testes ajustados
+- Collection Postman v2.0 - Testes ajustados
 
 #### 📊 Estatísticas
 - **Endpoints:** 5/5 operacionais (100%)
