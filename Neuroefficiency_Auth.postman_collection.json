@@ -364,16 +364,10 @@
                     "listen": "prerequest",
                     "script": {
                         "exec": [
-                            "// Usar o mesmo username do endpoint anterior (Register)",
-                            "// Este endpoint testa username duplicado, então deve usar o username já registrado",
+                            "// Reusar o mesmo username do endpoint anterior (Register)",
+                            "// Este endpoint testa username duplicado, então DEVE usar o username já registrado",
                             "var username = pm.collectionVariables.get(\"testUsername\");",
-                            "if (!username) {",
-                            "    // Se não existe, gerar um novo",
-                            "    var timestamp = new Date().getTime();",
-                            "    username = \"testuser\" + timestamp;",
-                            "    pm.collectionVariables.set(\"testUsername\", username);",
-                            "}",
-                            "console.log(\"📝 Usando username: \" + username + \" (deve estar duplicado)\");"
+                            "console.log(\"📝 Reusando username: \" + username + \" (deve falhar por duplicação)\");"
                         ],
                         "type": "text/javascript"
                     }
