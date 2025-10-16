@@ -64,6 +64,7 @@ class AuthenticationServiceTest {
     void setUp() {
         validRegisterRequest = RegisterRequest.builder()
                 .username("testuser")
+                .email("testuser@example.com")
                 .password("Test@1234")
                 .confirmPassword("Test@1234")
                 .build();

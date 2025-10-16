@@ -20,7 +20,7 @@ import java.util.Map;
  * Captura e trata exceções lançadas pelos controllers.
  * 
  * @author Joao Fuhrmann
- * @version 2.0 - Adicionados handlers para recuperação de senha (Tarefa 2)
+ * @version 3.0 - Adicionados handlers para RBAC (Fase 3)
  * @since 2025-10-11
  */
 @RestControllerAdvice
@@ -199,6 +199,64 @@ public class GlobalExceptionHandler {
         log.error("Erro inesperado: ", ex);
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    // ===========================================
+    // FASE 3: Handlers para RBAC
+    // ===========================================
+
+    /**
+     * Tratamento para role já existente
+     */
+    @ExceptionHandler(RoleAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleRoleAlreadyExistsException(
+            RoleAlreadyExistsException ex) {
+        
+        log.warn("Tentativa de criar role duplicada: {}", ex.getMessage());
+        
+        Map<String, Object> error = buildErrorResponse(
+                HttpStatus.CONFLICT, 
+                "Role Already Exists", 
+                ex.getMessage()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
+     * Tratamento para permissão já existente
+     */
+    @ExceptionHandler(PermissionAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handlePermissionAlreadyExistsException(
+            PermissionAlreadyExistsException ex) {
+        
+        log.warn("Tentativa de criar permissão duplicada: {}", ex.getMessage());
+        
+        Map<String, Object> error = buildErrorResponse(
+                HttpStatus.CONFLICT, 
+                "Permission Already Exists", 
+                ex.getMessage()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
+     * Tratamento para recurso não encontrado
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(
+            ResourceNotFoundException ex) {
+        
+        log.warn("Recurso não encontrado: {}", ex.getMessage());
+        
+        Map<String, Object> error = buildErrorResponse(
+                HttpStatus.NOT_FOUND, 
+                "Resource Not Found", 
+                ex.getMessage()
+        );
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     /**

@@ -14,7 +14,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Entidade Usuario - Representa um usuário do sistema Neuroefficiency
@@ -22,7 +24,7 @@ import java.util.Collections;
  * Implementa UserDetails do Spring Security para integração com o sistema de autenticação.
  * 
  * @author Joao Fuhrmann
- * @version 2.0 - Adicionado campo email (Tarefa 2)
+ * @version 3.0 - Adicionado RBAC com roles e permissões (Fase 3)
  * @since 2025-10-11
  */
 @Entity
@@ -79,6 +81,23 @@ public class Usuario implements UserDetails {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // ===========================================
+    // Relacionamentos RBAC (Fase 3)
+    // ===========================================
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "usuario_roles",
+        joinColumns = @JoinColumn(name = "usuario_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
+
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @Builder.Default
+    private UsuarioPacote pacote = null;
+
     /**
      * Método executado antes de persistir a entidade
      */
@@ -101,9 +120,24 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Por enquanto, sem roles/authorities
-        // Será implementado posteriormente com RBAC
-        return Collections.emptyList();
+        // Fase 3: Implementação RBAC completa
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        
+        // Adicionar roles
+        authorities.addAll(this.roles);
+        
+        // Adicionar permissões das roles
+        for (Role role : this.roles) {
+            authorities.addAll(role.getPermissions());
+        }
+        
+        // Adicionar permissões customizadas do pacote (se existir)
+        if (this.pacote != null && this.pacote.getPermissoesCustomizadas() != null) {
+            // TODO: Implementar parsing de JSON para permissões customizadas
+            // Por enquanto, retorna as authorities das roles
+        }
+        
+        return authorities;
     }
 
     @Override
@@ -136,6 +170,85 @@ public class Usuario implements UserDetails {
         return this.enabled;
     }
 
+    // ===========================================
+    // Métodos utilitários RBAC
+    // ===========================================
+
+    /**
+     * Adiciona uma role ao usuário
+     */
+    public void addRole(Role role) {
+        this.roles.add(role);
+        role.getUsuarios().add(this);
+    }
+
+    /**
+     * Remove uma role do usuário
+     */
+    public void removeRole(Role role) {
+        this.roles.remove(role);
+        role.getUsuarios().remove(this);
+    }
+
+    /**
+     * Verifica se o usuário tem uma role específica
+     */
+    public boolean hasRole(String roleName) {
+        return this.roles.stream()
+                .anyMatch(role -> role.getName().equals(roleName));
+    }
+
+    /**
+     * Verifica se o usuário tem uma permissão específica
+     */
+    public boolean hasPermission(String permissionName) {
+        return this.roles.stream()
+                .flatMap(role -> role.getPermissions().stream())
+                .anyMatch(permission -> permission.getName().equals(permissionName));
+    }
+
+    /**
+     * Verifica se o usuário é ADMIN
+     */
+    public boolean isAdmin() {
+        return hasRole("ADMIN");
+    }
+
+    /**
+     * Verifica se o usuário é CLINICO
+     */
+    public boolean isClinico() {
+        return hasRole("CLINICO");
+    }
+
+    /**
+     * Retorna o tipo do pacote do usuário
+     */
+    public String getPacoteType() {
+        return this.pacote != null ? this.pacote.getPacoteType() : null;
+    }
+
+    /**
+     * Verifica se o pacote do usuário está válido (ativo e não vencido)
+     */
+    public boolean isPacoteValido() {
+        return this.pacote != null && this.pacote.isValido();
+    }
+
+    /**
+     * Retorna o limite de pacientes do usuário
+     */
+    public Integer getLimitePacientes() {
+        return this.pacote != null ? this.pacote.getLimitePacientes() : null;
+    }
+
+    /**
+     * Verifica se o usuário tem limite de pacientes
+     */
+    public boolean hasLimitePacientes() {
+        return this.pacote != null && this.pacote.hasLimitePacientes();
+    }
+
     /**
      * ToString customizado para não expor dados sensíveis em logs
      */
@@ -145,6 +258,8 @@ public class Usuario implements UserDetails {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", enabled=" + enabled +
+                ", roles=" + roles.stream().map(Role::getName).collect(Collectors.toSet()) +
+                ", pacoteType=" + getPacoteType() +
                 ", createdAt=" + createdAt +
                 '}';
     }

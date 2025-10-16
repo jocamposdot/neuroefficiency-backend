@@ -7,7 +7,70 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
-## [3.0.0] - 2025-10-14
+## [3.0.0] - 2025-10-16
+
+### 🎉 Fase 3: RBAC (Role-Based Access Control) - COMPLETA
+
+#### ✨ Adicionado
+- **15 novos endpoints REST ADMIN:**
+  - `GET /api/admin/rbac/roles` - Listar roles
+  - `POST /api/admin/rbac/roles` - Criar role
+  - `GET /api/admin/rbac/permissions` - Listar permissões
+  - `POST /api/admin/rbac/permissions` - Criar permissão
+  - `GET /api/admin/rbac/stats` - Estatísticas RBAC
+  - `GET /api/admin/rbac/users/admin` - Listar usuários ADMIN
+  - `GET /api/admin/rbac/users/clinico` - Listar usuários CLINICO
+  - `POST /api/admin/rbac/users/{id}/roles/{roleName}` - Atribuir role
+  - `DELETE /api/admin/rbac/users/{id}/roles/{roleName}` - Remover role
+  - `GET /api/admin/rbac/users/{id}/has-role/{roleName}` - Verificar role
+  - `GET /api/admin/rbac/users/{id}/has-permission/{permissionName}` - Verificar permissão
+  - `POST /api/admin/rbac/users/{id}/package` - Criar pacote
+  - `GET /api/admin/rbac/packages/type/{type}` - Listar pacotes por tipo
+  - `GET /api/admin/rbac/packages/expired` - Listar pacotes vencidos
+  - `GET /api/admin/rbac/packages/valid` - Listar pacotes válidos
+
+- **Entidades e Repositories:**
+  - `Role` - Entidade para roles (ADMIN, CLINICO, etc.)
+  - `Permission` - Entidade para permissões granulares
+  - `UsuarioPacote` - Entidade para metadados de pacotes
+  - `RoleRepository` - Repository com queries customizadas
+  - `PermissionRepository` - Repository para permissões
+  - `UsuarioPacoteRepository` - Repository para pacotes
+
+- **Services:**
+  - `RbacService` - Lógica completa de gerenciamento RBAC
+
+- **Segurança:**
+  - Autorização por roles (`@PreAuthorize`)
+  - Endpoints ADMIN protegidos
+  - Sistema de permissões granulares
+  - Metadados de pacotes (limites, vencimento)
+
+- **Banco de Dados:**
+  - Migration V5: 5 tabelas RBAC (roles, permissions, role_permissions, usuario_roles, usuario_pacotes)
+  - Dados iniciais: 2 roles (ADMIN, CLINICO) + 12 permissões
+  - Índices otimizados para performance
+
+- **Testes:**
+  - Scripts organizados em `scripts/testes/rbac/`
+  - Testes manuais completos
+  - Documentação de testes
+
+#### 🔧 Modificado
+- `SecurityConfig.java` - Adicionada autorização RBAC
+- `Usuario.java` - Relacionamentos com roles e pacotes
+- `UsuarioRepository.java` - Métodos para RBAC
+- `GlobalExceptionHandler.java` - Handlers para exceções RBAC
+
+#### 📚 Documentação
+- README.md atualizado para Fase 3
+- Guia técnico completo atualizado
+- Scripts de teste organizados
+- Documentação RBAC completa
+
+---
+
+## [2.0.0] - 2025-10-14
 
 ### 🎉 Fase 2: Recuperação de Senha por Email - COMPLETA
 

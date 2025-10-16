@@ -1,8 +1,8 @@
 # 🚀 Neuroefficiency - Sistema de Autenticação
 
-**Versão:** 2.0 - Fase 1 + Recuperação de Senha  
+**Versão:** 3.0 - Fase 1 + Recuperação de Senha + RBAC  
 **Status:** ✅ 100% Funcional e Testado  
-**Última Atualização:** 14 de Outubro de 2025
+**Última Atualização:** 16 de Outubro de 2025
 
 ---
 
@@ -39,12 +39,12 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Fase Atual** | Fase 2 - Recuperação de Senha |
+| **Fase Atual** | Fase 3 - RBAC (Role-Based Access Control) |
 | **Progresso** | ✅ 100% Completo |
-| **Endpoints** | 12/12 (100%) |
-| **Testes** | 10/10 E2E passando (100%) |
-| **Classes Java** | 30 |
-| **Linhas de Código** | ~3.700 |
+| **Endpoints** | 27/27 (100%) |
+| **Testes** | 16/16 E2E passando (100%) |
+| **Classes Java** | 45+ |
+| **Linhas de Código** | ~5.500+ |
 | **Documentação** | 15+ arquivos completos |
 
 ---
@@ -348,7 +348,23 @@ Retorna: Status do serviço de recuperação de senha
 
 ## 🧪 TESTES
 
-### **Executar Testes:**
+### **📁 Scripts Organizados:**
+```
+scripts/testes/
+├── rbac/                    # Testes RBAC (Fase 3)
+│   ├── GUIA-TESTE-RBAC.md   # Guia completo de testes RBAC
+│   ├── teste-completo-rbac.ps1 # Teste completo do zero
+│   └── test-rbac-*.ps1      # Scripts de teste RBAC
+├── auth/                    # Testes de Autenticação (Fases 1-2)
+│   ├── test-simple.ps1      # Teste básico
+│   ├── test-complete-*.ps1  # Testes completos
+│   └── test-password-reset.ps1 # Testes de reset de senha
+└── utilitarios/             # Scripts utilitários
+    ├── get-token.ps1        # Obter token
+    └── check-*.ps1          # Verificações
+```
+
+### **Executar Testes Automatizados:**
 ```bash
 # Executar todos os testes
 ./mvnw test
@@ -358,6 +374,17 @@ Retorna: Status do serviço de recuperação de senha
 
 # Ver cobertura
 ./mvnw test jacoco:report
+```
+
+### **Executar Testes Manuais:**
+```powershell
+# Teste RBAC completo
+cd scripts/testes/rbac
+powershell -ExecutionPolicy Bypass -File teste-completo-rbac.ps1
+
+# Teste de autenticação
+cd scripts/testes/auth
+powershell -ExecutionPolicy Bypass -File test-simple.ps1
 ```
 
 ### **Resultado:**
@@ -370,6 +397,7 @@ Tests run: 16, Failures: 0, Errors: 0, Skipped: 0
 - ✅ Testes unitários (6)
 - ✅ Testes de integração (9)
 - ✅ Teste de contexto Spring (1)
+- ✅ Testes RBAC (manuais)
 
 ---
 

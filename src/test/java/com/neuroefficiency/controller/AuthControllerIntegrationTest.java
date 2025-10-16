@@ -66,6 +66,7 @@ class AuthControllerIntegrationTest {
     void shouldRegisterNewUserSuccessfully() throws Exception {
         RegisterRequest request = RegisterRequest.builder()
                 .username("newuser")
+                .email("newuser@example.com")
                 .password("NewUser@123")
                 .confirmPassword("NewUser@123")
                 .build();
@@ -85,6 +86,7 @@ class AuthControllerIntegrationTest {
     void shouldReturn400WhenPasswordsDoNotMatch() throws Exception {
         RegisterRequest request = RegisterRequest.builder()
                 .username("newuser")
+                .email("newuser@example.com")
                 .password("NewUser@123")
                 .confirmPassword("DifferentPassword@123")
                 .build();
@@ -103,6 +105,7 @@ class AuthControllerIntegrationTest {
         // Primeiro registro
         RegisterRequest firstRequest = RegisterRequest.builder()
                 .username("existinguser")
+                .email("existinguser@example.com")
                 .password("Existing@123")
                 .confirmPassword("Existing@123")
                 .build();
@@ -115,6 +118,7 @@ class AuthControllerIntegrationTest {
         // Tentativa de registro duplicado
         RegisterRequest duplicateRequest = RegisterRequest.builder()
                 .username("existinguser")
+                .email("different@example.com")
                 .password("Different@123")
                 .confirmPassword("Different@123")
                 .build();
@@ -132,6 +136,7 @@ class AuthControllerIntegrationTest {
     void shouldReturn400WhenDataIsInvalid() throws Exception {
         RegisterRequest request = RegisterRequest.builder()
                 .username("ab")  // Username muito curto
+                .email("ab@example.com")
                 .password("weak")  // Senha fraca
                 .confirmPassword("weak")
                 .build();
@@ -152,6 +157,7 @@ class AuthControllerIntegrationTest {
         // Primeiro, registrar o usuário
         RegisterRequest registerRequest = RegisterRequest.builder()
                 .username("loginuser")
+                .email("loginuser@example.com")
                 .password("Login@123")
                 .confirmPassword("Login@123")
                 .build();

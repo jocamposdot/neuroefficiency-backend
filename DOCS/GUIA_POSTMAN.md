@@ -1,9 +1,9 @@
 # 📦 Guia da Collection Postman - Neuroefficiency Auth
 
-**Versão Collection:** 2.0 (Fase 1 + Fase 2)  
+**Versão Collection:** 3.0 (Fase 1 + Fase 2 + Fase 3)  
 **Status:** ✅ 100% Funcional  
-**Endpoints:** 12/12 (5 Auth + 4 Password Reset + 3 Validações)  
-**Última Atualização:** 14 de Outubro de 2025
+**Endpoints:** 27/27 (5 Auth + 4 Password Reset + 15 RBAC + 3 Validações)  
+**Última Atualização:** 16 de Outubro de 2025
 
 ---
 

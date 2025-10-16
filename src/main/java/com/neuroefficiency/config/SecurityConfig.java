@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -21,11 +22,12 @@ import org.springframework.security.web.context.SecurityContextRepository;
  * Define as regras de autenticação e autorização do sistema Neuroefficiency.
  * 
  * @author Joao Fuhrmann
- * @version 2.0 - Adicionados endpoints públicos de reset de senha (Tarefa 2)
+ * @version 3.0 - Adicionada autorização RBAC (Fase 3)
  * @since 2025-10-11
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -77,6 +79,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/password-reset/confirm").permitAll()
                 .requestMatchers("/api/auth/password-reset/validate-token/**").permitAll()
                 .requestMatchers("/api/auth/password-reset/health").permitAll()
+                
+                // FASE 3: Endpoints RBAC - Apenas ADMIN
+                .requestMatchers("/api/admin/rbac/**").hasRole("ADMIN")
                 
                 // Outros endpoints públicos
                 .requestMatchers("/h2-console/**").permitAll()
