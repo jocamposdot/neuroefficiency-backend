@@ -113,21 +113,88 @@ CONTAINER ID   IMAGE   ...
 
 ---
 
-### **🔹 PASSO 1: Iniciar MailHog (Servidor de Email para Testes)**
+### **🔹 PASSO 1: Instalar e Iniciar MailHog (Servidor de Email para Testes)**
 
 **Por quê?** Para testar a funcionalidade de recuperação de senha completa (Fase 2)
 
-#### **1.1. Abrir PowerShell/Terminal**
+#### **1.1. Verificar se Docker está instalado**
 
-**Windows:**
+**Abrir PowerShell/Terminal:**
 - Pressionar `Win + X`
 - Selecionar "Windows PowerShell" ou "Terminal"
 
-#### **1.2. Iniciar container MailHog**
+**Executar:**
+```powershell
+docker --version
+```
+
+**✅ Se aparecer algo como:** `Docker version 24.x.x`
+- Docker está instalado! Pule para a etapa 1.2
+
+**❌ Se aparecer erro:** `docker: command not found` ou similar
+- Docker NÃO está instalado. Siga as instruções abaixo:
+
+---
+
+#### **1.1.1. Instalar Docker Desktop (se necessário)**
+
+**Passo a Passo:**
+
+1. **Baixar Docker Desktop:**
+   - Abrir navegador
+   - Ir para: https://www.docker.com/products/docker-desktop
+   - Clicar em: **"Download for Windows"**
+   - Aguardar download (~500 MB)
+
+2. **Instalar Docker Desktop:**
+   - Executar o arquivo baixado: `Docker Desktop Installer.exe`
+   - Clicar em: **"OK"** para aceitar configurações padrão
+   - Aguardar instalação (~5 minutos)
+   - Clicar em: **"Close and restart"** (o computador vai reiniciar)
+
+3. **Após reiniciar:**
+   - Docker Desktop inicia automaticamente
+   - Aguardar ícone do Docker na bandeja do sistema ficar **verde** (~30 segundos)
+   - ✅ Docker está pronto!
+
+4. **Verificar instalação:**
+   ```powershell
+   docker --version
+   docker ps
+   ```
+   **Resultado esperado:**
+   ```
+   Docker version 24.x.x, build xxxxxxx
+   CONTAINER ID   IMAGE   COMMAND   CREATED   STATUS   PORTS   NAMES
+   ```
+
+**⏱️ Tempo total:** ~10-15 minutos (primeira vez)
+
+---
+
+#### **1.2. Baixar e Iniciar MailHog**
+
+**Agora que o Docker está instalado, vamos baixar e iniciar o MailHog:**
 
 ```powershell
 docker run -d --name mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog
 ```
+
+**O que vai acontecer:**
+```
+Unable to find image 'mailhog/mailhog:latest' locally
+latest: Pulling from mailhog/mailhog
+...
+Status: Downloaded newer image for mailhog/mailhog:latest
+abc123def456...
+```
+
+**✅ Isso é NORMAL!** O Docker está:
+1. Baixando a imagem do MailHog (~10 MB)
+2. Criando o container
+3. Iniciando o MailHog
+
+**⏱️ Tempo:** ~30 segundos (primeira vez) | ~2 segundos (próximas vezes)
 
 **Parâmetros explicados:**
 - `-d` → Rodar em background (detached)
