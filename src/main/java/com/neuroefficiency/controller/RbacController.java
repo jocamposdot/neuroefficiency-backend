@@ -7,6 +7,7 @@ import com.neuroefficiency.domain.model.UsuarioPacote;
 import com.neuroefficiency.dto.response.UserResponse;
 import com.neuroefficiency.dto.response.RoleResponse;
 import com.neuroefficiency.dto.response.PermissionResponse;
+import com.neuroefficiency.dto.response.UsuarioPacoteResponse;
 import com.neuroefficiency.service.RbacService;
 import com.neuroefficiency.service.RbacService.RbacStats;
 
@@ -234,37 +235,46 @@ public class RbacController {
      * Lista pacotes por tipo
      */
     @GetMapping("/packages/type/{pacoteType}")
-    public ResponseEntity<List<UsuarioPacote>> getPackagesByType(@PathVariable String pacoteType) {
+    public ResponseEntity<List<UsuarioPacoteResponse>> getPackagesByType(@PathVariable String pacoteType) {
         log.info("Listando pacotes do tipo: {}", pacoteType);
         List<UsuarioPacote> packages = rbacService.findPacotesByType(pacoteType);
-        return ResponseEntity.ok(packages);
+        List<UsuarioPacoteResponse> response = packages.stream()
+                .map(UsuarioPacoteResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Lista pacotes vencidos
      */
     @GetMapping("/packages/expired")
-    public ResponseEntity<List<UsuarioPacote>> getExpiredPackages() {
+    public ResponseEntity<List<UsuarioPacoteResponse>> getExpiredPackages() {
         log.info("Listando pacotes vencidos");
         List<UsuarioPacote> packages = rbacService.findPacotesVencidos();
-        return ResponseEntity.ok(packages);
+        List<UsuarioPacoteResponse> response = packages.stream()
+                .map(UsuarioPacoteResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Lista pacotes que vencem em X dias
      */
     @GetMapping("/packages/expiring/{days}")
-    public ResponseEntity<List<UsuarioPacote>> getPackagesExpiringIn(@PathVariable int days) {
+    public ResponseEntity<List<UsuarioPacoteResponse>> getPackagesExpiringIn(@PathVariable int days) {
         log.info("Listando pacotes que vencem em {} dias", days);
         List<UsuarioPacote> packages = rbacService.findPacotesVencendoEm(days);
-        return ResponseEntity.ok(packages);
+        List<UsuarioPacoteResponse> response = packages.stream()
+                .map(UsuarioPacoteResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Cria ou atualiza pacote de usuário
      */
     @PostMapping("/users/{userId}/package")
-    public ResponseEntity<UsuarioPacote> createOrUpdateUserPackage(
+    public ResponseEntity<UsuarioPacoteResponse> createOrUpdateUserPackage(
             @PathVariable Long userId,
             @Valid @RequestBody CreatePackageRequest request) {
         
@@ -276,7 +286,7 @@ public class RbacController {
                 request.getDataVencimento(),
                 request.getObservacoes()
         );
-        return ResponseEntity.ok(pacote);
+        return ResponseEntity.ok(UsuarioPacoteResponse.fromEntity(pacote));
     }
 
     // ===========================================
