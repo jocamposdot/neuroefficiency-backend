@@ -8,9 +8,11 @@
 
 ## 🎯 **RESUMO EXECUTIVO**
 
-**Problema:** 8 endpoints RBAC retornavam `500 Internal Server Error` devido a `LazyInitializationException`.
+**Problema:** 12 endpoints RBAC retornavam `500 Internal Server Error` devido a `LazyInitializationException`.
 
 **Endpoints afetados:**
+
+**Roles e Permissions (8):**
 - `GET /api/admin/rbac/roles`
 - `GET /api/admin/rbac/permissions`
 - `GET /api/admin/rbac/users/admin`
@@ -20,11 +22,17 @@
 - `POST /api/admin/rbac/permissions`
 - `POST /api/admin/rbac/roles/{roleName}/permissions/{permissionName}`
 
-**Causa:** Controller retornava entidades JPA diretamente, que tentavam acessar collections lazy após o fechamento da sessão do Hibernate.
+**Pacotes (4):**
+- `GET /api/admin/rbac/packages/type/{type}`
+- `GET /api/admin/rbac/packages/expired`
+- `GET /api/admin/rbac/packages/expiring/{days}`
+- `POST /api/admin/rbac/users/{userId}/package`
 
-**Solução:** Criação de DTOs (`RoleResponse`, `PermissionResponse` e `UserResponse`) para evitar serialização de entidades JPA.
+**Causa:** Controller retornava entidades JPA diretamente, que tentavam acessar collections/proxies lazy após o fechamento da sessão do Hibernate.
 
-**Resultado:** ✅ Todos os erros resolvidos, 8 endpoints funcionando 100%.
+**Solução:** Criação de DTOs (`RoleResponse`, `PermissionResponse`, `UserResponse` e `UsuarioPacoteResponse`) para evitar serialização de entidades JPA e uso de `Hibernate.isInitialized()` para verificar proxies.
+
+**Resultado:** ✅ Todos os erros resolvidos, 12 endpoints funcionando 100%.
 
 ---
 
@@ -482,13 +490,71 @@ GET /api/admin/rbac/roles
 
 ---
 
+### **3. UsuarioPacoteResponse (Caso Especial):**
+
+O `UsuarioPacoteResponse` teve um desafio adicional: o `UsuarioPacote` tem uma referência `@OneToOne(fetch = FetchType.LAZY)` para `Usuario`. Mesmo tentando acessar apenas o ID, o Hibernate criava um **proxy lazy** que causava erro ao acessar propriedades.
+
+#### **Solução com Hibernate.isInitialized():**
+
+```java
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UsuarioPacoteResponse {
+    private Long id;
+    private Long usuarioId;
+    private String usuarioUsername;
+    private String pacoteType;
+    private Integer limitePacientes;
+    private LocalDate dataVencimento;
+    private String observacoes;
+    private Boolean ativo;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public static UsuarioPacoteResponse fromEntity(UsuarioPacote pacote) {
+        Long usuarioId = null;
+        String usuarioUsername = null;
+        
+        // ✅ Verifica se o Usuario está inicializado ANTES de acessar
+        if (pacote.getUsuario() != null && Hibernate.isInitialized(pacote.getUsuario())) {
+            usuarioId = pacote.getUsuario().getId();
+            usuarioUsername = pacote.getUsuario().getUsername();
+        }
+        
+        return UsuarioPacoteResponse.builder()
+                .id(pacote.getId())
+                .usuarioId(usuarioId) // ← Seguro!
+                .usuarioUsername(usuarioUsername) // ← Seguro!
+                .pacoteType(pacote.getPacoteType())
+                .limitePacientes(pacote.getLimitePacientes())
+                .dataVencimento(pacote.getDataVencimento())
+                .observacoes(pacote.getObservacoes())
+                .ativo(pacote.getAtivo())
+                .createdAt(pacote.getCreatedAt())
+                .updatedAt(pacote.getUpdatedAt())
+                .build();
+    }
+}
+```
+
+**Por que `Hibernate.isInitialized()`?**
+- ✅ Detecta se o proxy foi carregado
+- ✅ Não tenta inicializar se não estiver carregado
+- ✅ Retorna `null` gracefully em vez de lançar exceção
+- ✅ Permite que o DTO funcione com e sem eager loading
+
+---
+
 ## 🔧 **ARQUIVOS MODIFICADOS**
 
 | Arquivo | Mudança | Motivo |
 |---------|---------|--------|
 | **`RoleResponse.java`** | ✅ NOVO | DTO para Role |
 | **`PermissionResponse.java`** | ✅ NOVO | DTO para Permission |
-| **`RbacController.java`** | ✅ ATUALIZADO | Usar DTOs em vez de entities |
+| **`UsuarioPacoteResponse.java`** | ✅ NOVO | DTO para UsuarioPacote com Hibernate.isInitialized() |
+| **`RbacController.java`** | ✅ ATUALIZADO | Usar DTOs em vez de entities (15 métodos) |
 
 ---
 

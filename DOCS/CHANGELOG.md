@@ -12,8 +12,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ### 🔧 Correção Crítica: LazyInitializationException
 
 #### 🐛 Corrigido
-- **LazyInitializationException** em 8 endpoints RBAC
-  - **Endpoints corrigidos:**
+- **LazyInitializationException** em **12 endpoints RBAC**
+  - **Endpoints Roles/Permissions/Users (8):**
     - `GET /api/admin/rbac/roles`
     - `GET /api/admin/rbac/permissions`
     - `GET /api/admin/rbac/users/admin`
@@ -22,8 +22,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
     - `POST /api/admin/rbac/roles`
     - `POST /api/admin/rbac/permissions`
     - `POST /api/admin/rbac/roles/{roleName}/permissions/{permissionName}`
-  - **Problema:** Controller retornava entidades JPA diretamente, causando erro ao serializar collections lazy após fechamento da sessão Hibernate
-  - **Solução:** Implementado padrão DTO (Data Transfer Object) para todas as respostas RBAC
+  - **Endpoints Pacotes (4):**
+    - `GET /api/admin/rbac/packages/type/{type}`
+    - `GET /api/admin/rbac/packages/expired`
+    - `GET /api/admin/rbac/packages/expiring/{days}`
+    - `POST /api/admin/rbac/users/{userId}/package`
+  - **Problema:** Controller retornava entidades JPA diretamente, causando erro ao serializar collections/proxies lazy após fechamento da sessão Hibernate
+  - **Solução:** Implementado padrão DTO (Data Transfer Object) para todas as respostas RBAC + uso de `Hibernate.isInitialized()` para verificar proxies
 
 #### ✨ Adicionado
 - **DTOs de Response:**
@@ -33,12 +38,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - `PermissionResponse` - DTO para Permission com dois métodos de conversão:
     - `fromEntity()` - Sem roles (para listagens)
     - `fromEntityWithRoles()` - Com roles (para detalhes)
+  - `UsuarioPacoteResponse` - DTO para UsuarioPacote com verificação de proxy lazy:
+    - `fromEntity()` - Usa `Hibernate.isInitialized()` para evitar LazyInitializationException
+    - Retorna `null` gracefully se Usuario não estiver carregado
 
 - **Documentação:**
-  - `DOCS/ANALISE-ERRO-LAZY-INITIALIZATION.md` - Análise técnica profunda do erro, causas, soluções possíveis e implementação
+  - `DOCS/ANALISE-ERRO-LAZY-INITIALIZATION.md` - Análise técnica profunda do erro, causas, soluções possíveis e implementação (atualizada com UsuarioPacoteResponse)
 
 #### 🔄 Modificado
-- **`RbacController` - 8 endpoints atualizados:**
+- **`RbacController` - 12 endpoints atualizados:**
   - `getAllRoles()` → `List<RoleResponse>`
   - `getAllRolesWithPermissions()` → `List<RoleResponse>` (com permissions)
   - `getAllPermissions()` → `List<PermissionResponse>`
@@ -48,6 +56,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - `getClinicoUsers()` → `List<UserResponse>`
   - `createRole()` → `RoleResponse`
   - `createPermission()` → `PermissionResponse`
+  - `getPackagesByType()` → `List<UsuarioPacoteResponse>`
+  - `getExpiredPackages()` → `List<UsuarioPacoteResponse>`
+  - `getPackagesExpiringIn()` → `List<UsuarioPacoteResponse>`
+  - `createOrUpdateUserPackage()` → `UsuarioPacoteResponse`
   - `addPermissionToRole()` → `RoleResponse` (com permissions)
   - `removePermissionFromRole()` → `RoleResponse` (com permissions)
 
