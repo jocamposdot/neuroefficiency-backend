@@ -4,6 +4,7 @@ import com.neuroefficiency.domain.model.Permission;
 import com.neuroefficiency.domain.model.Role;
 import com.neuroefficiency.domain.model.Usuario;
 import com.neuroefficiency.domain.model.UsuarioPacote;
+import com.neuroefficiency.dto.response.UserResponse;
 import com.neuroefficiency.service.RbacService;
 import com.neuroefficiency.service.RbacService.RbacStats;
 import jakarta.validation.Valid;
@@ -178,26 +179,26 @@ public class RbacController {
      * Adiciona role a um usuário
      */
     @PostMapping("/users/{userId}/roles/{roleName}")
-    public ResponseEntity<Usuario> addRoleToUser(
+    public ResponseEntity<UserResponse> addRoleToUser(
             @PathVariable Long userId,
             @PathVariable String roleName) {
         
         log.info("Adicionando role {} ao usuário ID: {}", roleName, userId);
         Usuario user = rbacService.addRoleToUsuario(userId, roleName);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     /**
      * Remove role de um usuário
      */
     @DeleteMapping("/users/{userId}/roles/{roleName}")
-    public ResponseEntity<Usuario> removeRoleFromUser(
+    public ResponseEntity<UserResponse> removeRoleFromUser(
             @PathVariable Long userId,
             @PathVariable String roleName) {
         
         log.info("Removendo role {} do usuário ID: {}", roleName, userId);
         Usuario user = rbacService.removeRoleFromUsuario(userId, roleName);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     // ===========================================

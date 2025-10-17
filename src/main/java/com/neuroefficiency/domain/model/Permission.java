@@ -133,4 +133,21 @@ public class Permission implements GrantedAuthority {
                 ", createdAt=" + createdAt +
                 '}';
     }
+
+    /**
+     * Equals e HashCode customizados para evitar referência circular
+     * Baseado apenas no name (chave de negócio)
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Permission)) return false;
+        Permission permission = (Permission) o;
+        return name != null && name.equals(permission.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

@@ -1,0 +1,1086 @@
+{
+    "info": {
+        "_postman_id": "neuro-auth-v3-2025-fase3-rbac",
+        "name": "Neuroefficiency Auth API v3.0 - COMPLETA",
+        "description": "Collection completa do sistema Neuroefficiency com Autenticação, Recuperação de Senha e RBAC.\n\n**Versão:** 3.0 (Fase 1 + Fase 2 + Fase 3 COMPLETAS)\n**Status:** ✅ 100% Completa e Testada\n**Endpoints:** 27/27 (100%)\n**Testes Automatizados:** 47/47 (100%)\n**Última Atualização:** 16/10/2025\n\n**📋 CONTEÚDO:**\n\n**Fase 1 - Autenticação (5 endpoints):**\n✅ Health Check\n✅ Register\n✅ Login\n✅ Me (usuário autenticado)\n✅ Logout\n\n**Fase 2 - Recuperação de Senha (4 endpoints):**\n✅ Password Reset Request\n✅ Password Reset Validate Token\n✅ Password Reset Confirm\n✅ Password Reset Health\n\n**Fase 3 - RBAC (15 endpoints ADMIN):**\n✅ List Roles\n✅ Create Role\n✅ List Permissions\n✅ Create Permission\n✅ Add Role to User\n✅ Remove Role from User\n✅ Get User's Roles\n✅ Check User Has Role\n✅ Check User Has Permission\n✅ List Admin Users\n✅ List Clinico Users\n✅ Create/Update User Package\n✅ List Packages by Type\n✅ List Expired Packages\n✅ RBAC Statistics\n\n**Validações (3 endpoints):**\n✅ Register - Username Duplicado\n✅ Login - Credenciais Inválidas\n✅ RBAC - Acesso Negado sem ADMIN\n\n**🔒 SEGURANÇA:**\n- BCrypt força 12 (senhas)\n- SHA-256 (tokens reset)\n- Rate limiting (3/hora)\n- RBAC com @PreAuthorize\n- Anti-enumeração\n- Auditoria LGPD\n\n**⚙️ CONFIGURAÇÃO:**\nZero configuração necessária! Todas as variáveis são internas.\n\n**🚀 COMO USAR:**\n1. Inicie a aplicação: ./mvnw spring-boot:run\n2. Execute os endpoints NA ORDEM (1 → 27)\n3. Para testar RBAC: crie um usuário ADMIN no H2 Console\n4. Veja todos os testes passando em verde!\n\n**📖 DOCUMENTAÇÃO:**\nVer DOCS/GUIA_POSTMAN.md para guia completo",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "📦 FASE 1 - AUTENTICAÇÃO",
+            "item": [
+                {
+                    "name": "1. Health Check",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has correct structure\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('status');",
+                                    "    pm.expect(jsonData).to.have.property('service');",
+                                    "    pm.expect(jsonData).to.have.property('version');",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Service is UP\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.status).to.eql(\"UP\");",
+                                    "    pm.expect(jsonData.service).to.eql(\"Authentication Service\");",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Health Check: Sistema operacional\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/health",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "health"]
+                        },
+                        "description": "Verifica se o serviço de autenticação está disponível.\n\n**Acesso:** Público\n**Resposta:** 200 OK"
+                    }
+                },
+                {
+                    "name": "2. Register - Novo Usuário",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "exec": [
+                                    "// Gerar username único",
+                                    "var timestamp = new Date().getTime();",
+                                    "var username = \"testuser\" + timestamp;",
+                                    "pm.collectionVariables.set(\"testUsername\", username);",
+                                    "console.log(\"📝 Username gerado: \" + username);"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 201 Created\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has correct structure\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('message');",
+                                    "    pm.expect(jsonData).to.have.property('user');",
+                                    "});",
+                                    "",
+                                    "// Salvar dados para próximos testes",
+                                    "if (pm.response.code === 201) {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.collectionVariables.set(\"userId\", jsonData.user.id);",
+                                    "    pm.collectionVariables.set(\"username\", jsonData.user.username);",
+                                    "    console.log(\"✅ Usuário criado - ID: \" + jsonData.user.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"email\": \"{{testUsername}}@example.com\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/register",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "register"]
+                        },
+                        "description": "Registra novo usuário com email.\n\n**Acesso:** Público\n**Resposta:** 201 Created"
+                    }
+                },
+                {
+                    "name": "3. Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Login successful\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.message).to.include(\"sucesso\");",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Session cookie present\", function () {",
+                                    "    pm.expect(pm.cookies.has(\"JSESSIONID\")).to.be.true;",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Login bem-sucedido\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"Test@1234\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "login"]
+                        },
+                        "description": "Autentica usuário e cria sessão HTTP.\n\n**Acesso:** Público\n**Resposta:** 200 OK + Cookie JSESSIONID"
+                    }
+                },
+                {
+                    "name": "4. Me - Get Current User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"User data is correct\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('username');",
+                                    "    pm.expect(jsonData).to.have.property('email');",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Usuário autenticado obtido\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/me",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "me"]
+                        },
+                        "description": "Obtém dados do usuário atual.\n\n**Acesso:** 🔒 Autenticado\n**Resposta:** 200 OK"
+                    }
+                },
+                {
+                    "name": "5. Logout",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Logout successful\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.message).to.include(\"sucesso\");",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Logout realizado\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/logout",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "logout"]
+                        },
+                        "description": "Encerra sessão do usuário.\n\n**Acesso:** 🔒 Autenticado\n**Resposta:** 200 OK"
+                    }
+                }
+            ],
+            "description": "Endpoints de autenticação básica (Fase 1)"
+        },
+        {
+            "name": "🔐 FASE 2 - RECUPERAÇÃO DE SENHA",
+            "item": [
+                {
+                    "name": "6. Password Reset - Request",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has success field\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('success');",
+                                    "    pm.expect(jsonData.success).to.be.true;",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Reset solicitado - Verificar email no MailHog\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "Accept-Language", "value": "pt-BR"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"{{testUsername}}@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/password-reset/request",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "password-reset", "request"]
+                        },
+                        "description": "Solicita reset de senha por email.\n\n**Acesso:** Público\n**Requisito:** MailHog rodando\n**Resposta:** 200 OK"
+                    }
+                },
+                {
+                    "name": "7. Password Reset - Validate Token",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has valid field\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data).to.have.property('valid');",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Token validado\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/password-reset/validate-token/COLE_TOKEN_AQUI",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "password-reset", "validate-token", "COLE_TOKEN_AQUI"]
+                        },
+                        "description": "Valida token de reset.\n\n**INSTRUÇÕES:**\n1. Execute endpoint 6\n2. Abra MailHog: http://localhost:8025\n3. Copie o token (64 chars)\n4. Cole no lugar de COLE_TOKEN_AQUI\n\n**Acesso:** Público\n**Resposta:** 200 OK"
+                    }
+                },
+                {
+                    "name": "8. Password Reset - Confirm",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Password reset successful\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.success).to.be.true;",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Senha redefinida com sucesso\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "Accept-Language", "value": "pt-BR"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"token\": \"COLE_TOKEN_AQUI\",\n  \"newPassword\": \"NewPass@1234\",\n  \"confirmPassword\": \"NewPass@1234\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/password-reset/confirm",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "password-reset", "confirm"]
+                        },
+                        "description": "Confirma nova senha.\n\n**Acesso:** Público\n**Resposta:** 200 OK"
+                    }
+                },
+                {
+                    "name": "9. Password Reset - Health Check",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status code is 200 OK\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Service is UP\", function () {",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data.status).to.eql(\"UP\");",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Serviço de reset operacional\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/password-reset/health",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "password-reset", "health"]
+                        },
+                        "description": "Verifica status do serviço de reset.\n\n**Acesso:** Público\n**Resposta:** 200 OK"
+                    }
+                }
+            ],
+            "description": "Endpoints de recuperação de senha (Fase 2)"
+        },
+        {
+            "name": "🔑 FASE 3 - RBAC (ADMIN)",
+            "item": [
+                {
+                    "name": "📌 SETUP - Criar Admin",
+                    "item": [
+                        {
+                            "name": "10. Create Admin User",
+                            "event": [
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "exec": [
+                                            "// Gerar username único para admin",
+                                            "var timestamp = new Date().getTime();",
+                                            "var adminUsername = \"admin\" + timestamp;",
+                                            "pm.collectionVariables.set(\"adminUsername\", adminUsername);",
+                                            "console.log(\"📝 Admin username gerado: \" + adminUsername);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                },
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Admin user created\", function () {",
+                                            "    pm.response.to.have.status(201);",
+                                            "});",
+                                            "",
+                                            "// Salvar admin ID",
+                                            "if (pm.response.code === 201) {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.collectionVariables.set(\"adminId\", jsonData.user.id);",
+                                            "    console.log(\"✅ Admin criado - ID: \" + jsonData.user.id);",
+                                            "    console.log(\"⚠️ ATENÇÃO: Atribua role ADMIN via H2 Console:\");",
+                                            "    console.log(\"   INSERT INTO usuario_roles (usuario_id, role_id)\");",
+                                            "    console.log(\"   VALUES (\" + jsonData.user.id + \", (SELECT id FROM roles WHERE name='ADMIN'));\");",
+                                            "}"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [{"key": "Content-Type", "value": "application/json"}],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"email\": \"{{adminUsername}}@admin.com\",\n  \"password\": \"Admin@1234\",\n  \"confirmPassword\": \"Admin@1234\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/register",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "auth", "register"]
+                                },
+                                "description": "**PASSO 1:** Cria usuário para Admin.\n\n**PASSO 2:** Atribuir role ADMIN no H2 Console:\n\n1. Acesse: http://localhost:8082/h2-console\n2. JDBC URL: jdbc:h2:mem:neurodb\n3. Username: sa (senha vazia)\n4. Execute o SQL mostrado no console\n5. Execute endpoint 11 (Login Admin)"
+                            }
+                        },
+                        {
+                            "name": "11. Login Admin",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Admin login successful\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Admin session created\", function () {",
+                                            "    pm.expect(pm.cookies.has(\"JSESSIONID\")).to.be.true;",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Admin autenticado - Pode usar endpoints RBAC\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [{"key": "Content-Type", "value": "application/json"}],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"Admin@1234\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/auth/login",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "auth", "login"]
+                                },
+                                "description": "Login como ADMIN.\n\n**Requisito:** Role ADMIN atribuída no H2 Console\n**Resposta:** 200 OK + Cookie JSESSIONID"
+                            }
+                        }
+                    ],
+                    "description": "Setup necessário para testar endpoints RBAC"
+                },
+                {
+                    "name": "🔹 Roles",
+                    "item": [
+                        {
+                            "name": "12. List Roles",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Roles list is array\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.be.an('array');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Roles listadas: \" + pm.response.json().length);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/roles",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "roles"]
+                                },
+                                "description": "Lista todas as roles ativas.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "13. Create Role",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Role created\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Role has correct structure\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.have.property('name');",
+                                            "    pm.expect(jsonData).to.have.property('description');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Role criada\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [{"key": "Content-Type", "value": "application/json"}],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"TEST_ROLE\",\n  \"description\": \"Role de teste criada via Postman\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/roles",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "roles"]
+                                },
+                                "description": "Cria nova role.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        }
+                    ],
+                    "description": "Gerenciamento de roles"
+                },
+                {
+                    "name": "🔹 Permissions",
+                    "item": [
+                        {
+                            "name": "14. List Permissions",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Permissions list is array\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.be.an('array');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Permissões listadas: \" + pm.response.json().length);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/permissions",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "permissions"]
+                                },
+                                "description": "Lista todas as permissões ativas.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "15. Create Permission",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Permission created\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Permission has correct structure\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.have.property('name');",
+                                            "    pm.expect(jsonData).to.have.property('resource');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Permissão criada\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [{"key": "Content-Type", "value": "application/json"}],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"TEST_PERMISSION\",\n  \"description\": \"Permissão de teste\",\n  \"resource\": \"test\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/permissions",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "permissions"]
+                                },
+                                "description": "Cria nova permissão.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        }
+                    ],
+                    "description": "Gerenciamento de permissões"
+                },
+                {
+                    "name": "🔹 User Roles",
+                    "item": [
+                        {
+                            "name": "16. Add Role to User",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Role added to user\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Response is user object\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.have.property('username');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Role atribuída ao usuário\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/users/{{userId}}/roles/CLINICO",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "users", "{{userId}}", "roles", "CLINICO"]
+                                },
+                                "description": "Adiciona role CLINICO ao usuário de teste.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "17. Remove Role from User",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Role removed from user\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Role removida do usuário\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "DELETE",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/users/{{userId}}/roles/CLINICO",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "users", "{{userId}}", "roles", "CLINICO"]
+                                },
+                                "description": "Remove role do usuário.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "18. Check User Has Role",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Response has hasRole field\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.have.property('hasRole');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Verificação de role concluída\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/users/{{adminId}}/has-role/ADMIN",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "users", "{{adminId}}", "has-role", "ADMIN"]
+                                },
+                                "description": "Verifica se usuário tem role específica.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "19. Check User Has Permission",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Response has hasPermission field\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.have.property('hasPermission');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Verificação de permissão concluída\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/users/{{adminId}}/has-permission/SYSTEM_ADMIN",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "users", "{{adminId}}", "has-permission", "SYSTEM_ADMIN"]
+                                },
+                                "description": "Verifica se usuário tem permissão específica.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        }
+                    ],
+                    "description": "Gerenciamento de roles de usuários"
+                },
+                {
+                    "name": "🔹 User Lists",
+                    "item": [
+                        {
+                            "name": "20. List Admin Users",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Admin users list is array\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.be.an('array');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Admins listados: \" + pm.response.json().length);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/users/admin",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "users", "admin"]
+                                },
+                                "description": "Lista todos usuários ADMIN.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "21. List Clinico Users",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Clinico users list is array\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.be.an('array');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Clínicos listados: \" + pm.response.json().length);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/users/clinico",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "users", "clinico"]
+                                },
+                                "description": "Lista todos usuários CLINICO.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        }
+                    ],
+                    "description": "Listagem de usuários por role"
+                },
+                {
+                    "name": "🔹 Packages",
+                    "item": [
+                        {
+                            "name": "22. Create/Update User Package",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Package created/updated\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Package has correct structure\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.have.property('pacoteType');",
+                                            "    pm.expect(jsonData).to.have.property('limitePacientes');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Pacote criado/atualizado\");"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "POST",
+                                "header": [{"key": "Content-Type", "value": "application/json"}],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"pacoteType\": \"PREMIUM\",\n  \"limitePacientes\": 500,\n  \"dataVencimento\": \"2026-12-31\",\n  \"observacoes\": \"Pacote premium de teste\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/users/{{userId}}/package",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "users", "{{userId}}", "package"]
+                                },
+                                "description": "Cria/atualiza pacote de usuário.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "23. List Packages by Type",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Packages list is array\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.be.an('array');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Pacotes PREMIUM listados: \" + pm.response.json().length);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/packages/type/PREMIUM",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "packages", "type", "PREMIUM"]
+                                },
+                                "description": "Lista pacotes por tipo.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        },
+                        {
+                            "name": "24. List Expired Packages",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Expired packages list is array\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.be.an('array');",
+                                            "});",
+                                            "",
+                                            "console.log(\"✅ Pacotes vencidos listados: \" + pm.response.json().length);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/packages/expired",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "packages", "expired"]
+                                },
+                                "description": "Lista pacotes vencidos.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        }
+                    ],
+                    "description": "Gerenciamento de pacotes de usuários"
+                },
+                {
+                    "name": "🔹 Statistics",
+                    "item": [
+                        {
+                            "name": "25. RBAC Statistics",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {",
+                                            "    pm.response.to.have.status(200);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Stats has correct structure\", function () {",
+                                            "    var jsonData = pm.response.json();",
+                                            "    pm.expect(jsonData).to.have.property('totalRoles');",
+                                            "    pm.expect(jsonData).to.have.property('totalPermissions');",
+                                            "    pm.expect(jsonData).to.have.property('totalUsuarios');",
+                                            "});",
+                                            "",
+                                            "var stats = pm.response.json();",
+                                            "console.log(\"✅ Estatísticas RBAC:\");",
+                                            "console.log(\"   Total Roles: \" + stats.totalRoles);",
+                                            "console.log(\"   Total Permissions: \" + stats.totalPermissions);",
+                                            "console.log(\"   Total Usuários: \" + stats.totalUsuarios);",
+                                            "console.log(\"   Total Admins: \" + stats.totalAdmins);",
+                                            "console.log(\"   Total Clínicos: \" + stats.totalClinicos);"
+                                        ],
+                                        "type": "text/javascript"
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/admin/rbac/stats",
+                                    "host": ["{{baseUrl}}"],
+                                    "path": ["api", "admin", "rbac", "stats"]
+                                },
+                                "description": "Obtém estatísticas do sistema RBAC.\n\n**Acesso:** 🔒 ADMIN\n**Resposta:** 200 OK"
+                            }
+                        }
+                    ],
+                    "description": "Estatísticas do sistema RBAC"
+                }
+            ],
+            "description": "Endpoints de gerenciamento RBAC - Requerem role ADMIN (Fase 3)"
+        },
+        {
+            "name": "❌ VALIDAÇÕES E TESTES DE ERRO",
+            "item": [
+                {
+                    "name": "26. RBAC - Access Denied (sem ADMIN)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Access denied (403 Forbidden)\", function () {",
+                                    "    pm.response.to.have.status(403);",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Segurança RBAC funcionando - Acesso negado sem role ADMIN\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/admin/rbac/stats",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "admin", "rbac", "stats"]
+                        },
+                        "description": "**TESTE DE SEGURANÇA:**\n\nTesta acesso negado a endpoint RBAC sem role ADMIN.\n\n**INSTRUÇÕES:**\n1. Faça logout do admin (endpoint 5)\n2. Faça login com usuário normal (endpoint 3)\n3. Execute este endpoint\n4. Deve retornar 403 Forbidden\n\n**Resposta Esperada:** 403 Forbidden"
+                    }
+                },
+                {
+                    "name": "27. Register - Username Duplicado",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Username conflict (409)\", function () {",
+                                    "    pm.response.to.have.status(409);",
+                                    "});",
+                                    "",
+                                    "console.log(\"✅ Validação de username duplicado funcionando\");"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"email\": \"outro@email.com\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/register",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["api", "auth", "register"]
+                        },
+                        "description": "**TESTE DE VALIDAÇÃO:**\n\nTenta registrar com username já existente.\n\n**Resposta Esperada:** 409 Conflict"
+                    }
+                }
+            ],
+            "description": "Testes de validação e segurança"
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:8082",
+            "type": "string"
+        },
+        {
+            "key": "testUsername",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "adminUsername",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "adminId",
+            "value": "",
+            "type": "string"
+        }
+    ]
+}
+

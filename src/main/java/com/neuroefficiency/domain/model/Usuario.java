@@ -263,5 +263,22 @@ public class Usuario implements UserDetails {
                 ", createdAt=" + createdAt +
                 '}';
     }
+
+    /**
+     * Equals e HashCode customizados para evitar referência circular
+     * Baseado apenas no username (chave de negócio)
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Usuario)) return false;
+        Usuario usuario = (Usuario) o;
+        return username != null && username.equals(usuario.username);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
 
