@@ -1,8 +1,8 @@
 # 🚀 Neuroefficiency - Sistema de Autenticação
 
-**Versão:** 3.0 - Fase 1 + Recuperação de Senha + RBAC  
+**Versão:** 3.1 - Fase 1 + Recuperação de Senha + RBAC + DTOs  
 **Status:** ✅ 100% Funcional e Testado  
-**Última Atualização:** 16 de Outubro de 2025
+**Última Atualização:** 17 de Outubro de 2025
 
 ---
 

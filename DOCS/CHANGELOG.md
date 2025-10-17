@@ -7,6 +7,68 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [3.1.0] - 2025-10-17
+
+### 🔧 Correção Crítica: LazyInitializationException
+
+#### 🐛 Corrigido
+- **LazyInitializationException** em 8 endpoints RBAC
+  - **Endpoints corrigidos:**
+    - `GET /api/admin/rbac/roles`
+    - `GET /api/admin/rbac/permissions`
+    - `GET /api/admin/rbac/users/admin`
+    - `GET /api/admin/rbac/users/clinico`
+    - `GET /api/admin/rbac/users/role/{roleName}`
+    - `POST /api/admin/rbac/roles`
+    - `POST /api/admin/rbac/permissions`
+    - `POST /api/admin/rbac/roles/{roleName}/permissions/{permissionName}`
+  - **Problema:** Controller retornava entidades JPA diretamente, causando erro ao serializar collections lazy após fechamento da sessão Hibernate
+  - **Solução:** Implementado padrão DTO (Data Transfer Object) para todas as respostas RBAC
+
+#### ✨ Adicionado
+- **DTOs de Response:**
+  - `RoleResponse` - DTO para Role com dois métodos de conversão:
+    - `fromEntity()` - Sem permissions (para listagens)
+    - `fromEntityWithPermissions()` - Com permissions (para detalhes)
+  - `PermissionResponse` - DTO para Permission com dois métodos de conversão:
+    - `fromEntity()` - Sem roles (para listagens)
+    - `fromEntityWithRoles()` - Com roles (para detalhes)
+
+- **Documentação:**
+  - `DOCS/ANALISE-ERRO-LAZY-INITIALIZATION.md` - Análise técnica profunda do erro, causas, soluções possíveis e implementação
+
+#### 🔄 Modificado
+- **`RbacController` - 8 endpoints atualizados:**
+  - `getAllRoles()` → `List<RoleResponse>`
+  - `getAllRolesWithPermissions()` → `List<RoleResponse>` (com permissions)
+  - `getAllPermissions()` → `List<PermissionResponse>`
+  - `getPermissionsByResource()` → `List<PermissionResponse>`
+  - `getUsersByRole()` → `List<UserResponse>`
+  - `getAdminUsers()` → `List<UserResponse>`
+  - `getClinicoUsers()` → `List<UserResponse>`
+  - `createRole()` → `RoleResponse`
+  - `createPermission()` → `PermissionResponse`
+  - `addPermissionToRole()` → `RoleResponse` (com permissions)
+  - `removePermissionFromRole()` → `RoleResponse` (com permissions)
+
+#### ✅ Testes
+- **Todos os 47 testes continuam passando (100%)**
+  - 16 testes unitários `RbacService`
+  - 15 testes integração `RbacController`
+  - 9 testes integração `AuthController`
+  - 6 testes unitários `AuthenticationService`
+  - 1 teste contexto Spring Boot
+
+#### 📊 Benefícios
+- ✅ Arquitetura limpa (separação Domain vs Presentation)
+- ✅ Performance otimizada (carrega só o necessário)
+- ✅ Segurança melhorada (controle sobre dados expostos)
+- ✅ Evita serialização circular
+- ✅ Facilita evolução e versionamento da API
+- ✅ Flexibilidade (endpoints com/sem associations)
+
+---
+
 ## [3.0.0] - 2025-10-16
 
 ### 🎉 Fase 3: RBAC (Role-Based Access Control) - COMPLETA

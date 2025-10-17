@@ -5,8 +5,12 @@ import com.neuroefficiency.domain.model.Role;
 import com.neuroefficiency.domain.model.Usuario;
 import com.neuroefficiency.domain.model.UsuarioPacote;
 import com.neuroefficiency.dto.response.UserResponse;
+import com.neuroefficiency.dto.response.RoleResponse;
+import com.neuroefficiency.dto.response.PermissionResponse;
 import com.neuroefficiency.service.RbacService;
 import com.neuroefficiency.service.RbacService.RbacStats;
+
+import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -51,56 +55,62 @@ public class RbacController {
      * Lista todas as roles ativas
      */
     @GetMapping("/roles")
-    public ResponseEntity<List<Role>> getAllRoles() {
+    public ResponseEntity<List<RoleResponse>> getAllRoles() {
         log.info("Listando todas as roles ativas");
         List<Role> roles = rbacService.findAllActiveRoles();
-        return ResponseEntity.ok(roles);
+        List<RoleResponse> response = roles.stream()
+                .map(RoleResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Lista todas as roles com suas permissões
      */
     @GetMapping("/roles/with-permissions")
-    public ResponseEntity<List<Role>> getAllRolesWithPermissions() {
+    public ResponseEntity<List<RoleResponse>> getAllRolesWithPermissions() {
         log.info("Listando todas as roles com permissões");
         List<Role> roles = rbacService.findAllRolesWithPermissions();
-        return ResponseEntity.ok(roles);
+        List<RoleResponse> response = roles.stream()
+                .map(RoleResponse::fromEntityWithPermissions)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Cria uma nova role
      */
     @PostMapping("/roles")
-    public ResponseEntity<Role> createRole(@Valid @RequestBody CreateRoleRequest request) {
+    public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody CreateRoleRequest request) {
         log.info("Criando nova role: {}", request.getName());
         Role role = rbacService.createRole(request.getName(), request.getDescription());
-        return ResponseEntity.ok(role);
+        return ResponseEntity.ok(RoleResponse.fromEntity(role));
     }
 
     /**
      * Adiciona permissão a uma role
      */
     @PostMapping("/roles/{roleName}/permissions/{permissionName}")
-    public ResponseEntity<Role> addPermissionToRole(
+    public ResponseEntity<RoleResponse> addPermissionToRole(
             @PathVariable String roleName,
             @PathVariable String permissionName) {
         
         log.info("Adicionando permissão {} à role {}", permissionName, roleName);
         Role role = rbacService.addPermissionToRole(roleName, permissionName);
-        return ResponseEntity.ok(role);
+        return ResponseEntity.ok(RoleResponse.fromEntityWithPermissions(role));
     }
 
     /**
      * Remove permissão de uma role
      */
     @DeleteMapping("/roles/{roleName}/permissions/{permissionName}")
-    public ResponseEntity<Role> removePermissionFromRole(
+    public ResponseEntity<RoleResponse> removePermissionFromRole(
             @PathVariable String roleName,
             @PathVariable String permissionName) {
         
         log.info("Removendo permissão {} da role {}", permissionName, roleName);
         Role role = rbacService.removePermissionFromRole(roleName, permissionName);
-        return ResponseEntity.ok(role);
+        return ResponseEntity.ok(RoleResponse.fromEntityWithPermissions(role));
     }
 
     // ===========================================
@@ -111,34 +121,40 @@ public class RbacController {
      * Lista todas as permissões ativas
      */
     @GetMapping("/permissions")
-    public ResponseEntity<List<Permission>> getAllPermissions() {
+    public ResponseEntity<List<PermissionResponse>> getAllPermissions() {
         log.info("Listando todas as permissões ativas");
         List<Permission> permissions = rbacService.findAllActivePermissions();
-        return ResponseEntity.ok(permissions);
+        List<PermissionResponse> response = permissions.stream()
+                .map(PermissionResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Lista permissões por recurso
      */
     @GetMapping("/permissions/resource/{resource}")
-    public ResponseEntity<List<Permission>> getPermissionsByResource(@PathVariable String resource) {
+    public ResponseEntity<List<PermissionResponse>> getPermissionsByResource(@PathVariable String resource) {
         log.info("Listando permissões para recurso: {}", resource);
         List<Permission> permissions = rbacService.findPermissionsByResource(resource);
-        return ResponseEntity.ok(permissions);
+        List<PermissionResponse> response = permissions.stream()
+                .map(PermissionResponse::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Cria uma nova permissão
      */
     @PostMapping("/permissions")
-    public ResponseEntity<Permission> createPermission(@Valid @RequestBody CreatePermissionRequest request) {
+    public ResponseEntity<PermissionResponse> createPermission(@Valid @RequestBody CreatePermissionRequest request) {
         log.info("Criando nova permissão: {} para recurso {}", request.getName(), request.getResource());
         Permission permission = rbacService.createPermission(
                 request.getName(), 
                 request.getDescription(), 
                 request.getResource()
         );
-        return ResponseEntity.ok(permission);
+        return ResponseEntity.ok(PermissionResponse.fromEntity(permission));
     }
 
     // ===========================================
@@ -149,30 +165,39 @@ public class RbacController {
      * Lista usuários com uma role específica
      */
     @GetMapping("/users/role/{roleName}")
-    public ResponseEntity<List<Usuario>> getUsersByRole(@PathVariable String roleName) {
+    public ResponseEntity<List<UserResponse>> getUsersByRole(@PathVariable String roleName) {
         log.info("Listando usuários com role: {}", roleName);
         List<Usuario> users = rbacService.findUsuariosByRole(roleName);
-        return ResponseEntity.ok(users);
+        List<UserResponse> response = users.stream()
+                .map(UserResponse::from)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Lista usuários ADMIN
      */
     @GetMapping("/users/admin")
-    public ResponseEntity<List<Usuario>> getAdminUsers() {
+    public ResponseEntity<List<UserResponse>> getAdminUsers() {
         log.info("Listando usuários ADMIN");
         List<Usuario> users = rbacService.findAdminUsuarios();
-        return ResponseEntity.ok(users);
+        List<UserResponse> response = users.stream()
+                .map(UserResponse::from)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
      * Lista usuários CLINICO
      */
     @GetMapping("/users/clinico")
-    public ResponseEntity<List<Usuario>> getClinicoUsers() {
+    public ResponseEntity<List<UserResponse>> getClinicoUsers() {
         log.info("Listando usuários CLINICO");
         List<Usuario> users = rbacService.findClinicoUsuarios();
-        return ResponseEntity.ok(users);
+        List<UserResponse> response = users.stream()
+                .map(UserResponse::from)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     /**
