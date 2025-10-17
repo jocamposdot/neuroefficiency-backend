@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.Hibernate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,12 +32,22 @@ public class UsuarioPacoteResponse {
 
     /**
      * Converte UsuarioPacote entity para UsuarioPacoteResponse DTO
+     * Usa Hibernate.isInitialized() para evitar LazyInitializationException
      */
     public static UsuarioPacoteResponse fromEntity(UsuarioPacote pacote) {
+        Long usuarioId = null;
+        String usuarioUsername = null;
+        
+        // Verifica se o Usuario está inicializado antes de acessar
+        if (pacote.getUsuario() != null && Hibernate.isInitialized(pacote.getUsuario())) {
+            usuarioId = pacote.getUsuario().getId();
+            usuarioUsername = pacote.getUsuario().getUsername();
+        }
+        
         return UsuarioPacoteResponse.builder()
                 .id(pacote.getId())
-                .usuarioId(pacote.getUsuario() != null ? pacote.getUsuario().getId() : null)
-                .usuarioUsername(pacote.getUsuario() != null ? pacote.getUsuario().getUsername() : null)
+                .usuarioId(usuarioId)
+                .usuarioUsername(usuarioUsername)
                 .pacoteType(pacote.getPacoteType())
                 .limitePacientes(pacote.getLimitePacientes())
                 .dataVencimento(pacote.getDataVencimento())
