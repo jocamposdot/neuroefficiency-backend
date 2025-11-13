@@ -59,6 +59,9 @@ class RbacServiceTest {
     @Mock
     private UsuarioPacoteRepository usuarioPacoteRepository;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private RbacService rbacService;
 

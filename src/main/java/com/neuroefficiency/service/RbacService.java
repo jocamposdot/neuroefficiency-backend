@@ -1,5 +1,6 @@
 package com.neuroefficiency.service;
 
+import com.neuroefficiency.domain.enums.AuditEventType;
 import com.neuroefficiency.domain.model.*;
 import com.neuroefficiency.domain.repository.*;
 import com.neuroefficiency.exception.ResourceNotFoundException;
@@ -22,7 +23,7 @@ import java.util.Set;
  * Implementa a lógica de negócio para o sistema de autorização.
  * 
  * @author Joao Fuhrmann
- * @version 1.0 - Fase 3 RBAC
+ * @version 4.0 - Adicionada auditoria (Fase 4)
  * @since 2025-10-16
  */
 @Service
@@ -35,6 +36,7 @@ public class RbacService {
     private final PermissionRepository permissionRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioPacoteRepository usuarioPacoteRepository;
+    private final AuditService auditService;
 
     // ===========================================
     // GERENCIAMENTO DE ROLES
@@ -58,6 +60,14 @@ public class RbacService {
 
         Role savedRole = roleRepository.save(role);
         log.info("Role criada com sucesso: {} (ID: {})", name, savedRole.getId());
+        
+        // Auditar criação de role
+        auditService.logSuccess(
+            AuditEventType.RBAC_ROLE_CREATED,
+            "Criou role: " + savedRole.getName(),
+            "Role",
+            savedRole.getId().toString()
+        );
         
         return savedRole;
     }
@@ -102,6 +112,15 @@ public class RbacService {
         Role savedRole = roleRepository.save(role);
         
         log.info("Permissão {} adicionada à role {} com sucesso", permissionName, roleName);
+        
+        // Auditar adição de permissão
+        auditService.logSuccess(
+            AuditEventType.RBAC_PERMISSION_ADDED_TO_ROLE,
+            "Adicionou permissão " + permissionName + " à role " + roleName,
+            "Role",
+            savedRole.getId().toString()
+        );
+        
         return savedRole;
     }
 
@@ -121,6 +140,15 @@ public class RbacService {
         Role savedRole = roleRepository.save(role);
         
         log.info("Permissão {} removida da role {} com sucesso", permissionName, roleName);
+        
+        // Auditar remoção de permissão
+        auditService.logSuccess(
+            AuditEventType.RBAC_PERMISSION_REMOVED_FROM_ROLE,
+            "Removeu permissão " + permissionName + " da role " + roleName,
+            "Role",
+            savedRole.getId().toString()
+        );
+        
         return savedRole;
     }
 
@@ -147,6 +175,14 @@ public class RbacService {
 
         Permission savedPermission = permissionRepository.save(permission);
         log.info("Permissão criada com sucesso: {} (ID: {})", name, savedPermission.getId());
+        
+        // Auditar criação de permissão
+        auditService.logSuccess(
+            AuditEventType.RBAC_PERMISSION_CREATED,
+            "Criou permissão: " + savedPermission.getName(),
+            "Permission",
+            savedPermission.getId().toString()
+        );
         
         return savedPermission;
     }

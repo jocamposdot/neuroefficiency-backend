@@ -105,26 +105,26 @@ public class PasswordResetService {
                     emailService.sendPasswordResetEmail(email, rawToken, locale);
                     
                     // Auditoria: sucesso
-                    logAudit(email, ipAddress, userAgent, AuditEventType.REQUEST, true, null);
+                    logAudit(email, ipAddress, userAgent, AuditEventType.AUTH_PASSWORD_RESET_REQUEST, true, null);
                     
                     log.info("Token de reset gerado e enviado com sucesso para: {}", sanitizeEmail(email));
                     
                 } catch (MessagingException e) {
                     log.error("Erro ao enviar email para: {}", sanitizeEmail(email), e);
-                    logAudit(email, ipAddress, userAgent, AuditEventType.FAILURE, false, "Erro ao enviar email");
+                    logAudit(email, ipAddress, userAgent, AuditEventType.AUTH_PASSWORD_RESET_REQUEST, false, "Erro ao enviar email");
                     throw new RuntimeException("Erro ao enviar email. Tente novamente mais tarde.");
                 }
             } else {
                 // Email não existe, mas não revelamos isso (anti-enumeração)
                 log.warn("Tentativa de reset para email não cadastrado: {}", sanitizeEmail(email));
-                logAudit(email, ipAddress, userAgent, AuditEventType.REQUEST, true, "Email não encontrado (oculto do usuário)");
+                logAudit(email, ipAddress, userAgent, AuditEventType.AUTH_PASSWORD_RESET_REQUEST, true, "Email não encontrado (oculto do usuário)");
                 
                 // Delay artificial para parecer processamento real (anti-timing-attack)
                 simulateDelay();
             }
 
         } catch (RateLimitExceededException e) {
-            logAudit(email, ipAddress, userAgent, AuditEventType.RATE_LIMIT, false, e.getMessage());
+            logAudit(email, ipAddress, userAgent, AuditEventType.SECURITY_RATE_LIMIT_EXCEEDED, false, e.getMessage());
             throw e;
         }
 
@@ -165,12 +165,12 @@ public class PasswordResetService {
 
         // 3. Validar token
         if (token.isUsed()) {
-            logAudit(email, ipAddress, userAgent, AuditEventType.INVALID_TOKEN, false, "Token já foi usado");
+            logAudit(email, ipAddress, userAgent, AuditEventType.SECURITY_INVALID_TOKEN, false, "Token já foi usado");
             throw new TokenInvalidException("Token já foi usado");
         }
 
         if (token.isExpired()) {
-            logAudit(email, ipAddress, userAgent, AuditEventType.EXPIRED_TOKEN, false, "Token expirado");
+            logAudit(email, ipAddress, userAgent, AuditEventType.SECURITY_INVALID_TOKEN, false, "Token expirado");
             throw new TokenExpiredException();
         }
 
@@ -195,7 +195,7 @@ public class PasswordResetService {
         }
 
         // 8. Auditoria: sucesso
-        logAudit(email, ipAddress, userAgent, AuditEventType.SUCCESS, true, null);
+        logAudit(email, ipAddress, userAgent, AuditEventType.AUTH_PASSWORD_RESET_CONFIRM, true, null);
 
         log.info("Senha alterada com sucesso para usuário: {}", usuario.getId());
     }
