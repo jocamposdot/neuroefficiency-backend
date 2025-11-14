@@ -276,9 +276,17 @@ public class AuditController {
      */
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<AuditStatsResponse>> getStatistics(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
+        // Se não fornecido, usar últimos 30 dias
+        if (startDate == null) {
+            startDate = LocalDate.now().minusDays(30);
+        }
+        if (endDate == null) {
+            endDate = LocalDate.now();
+        }
+        
         log.info("Calculando estatísticas de auditoria (período: {} a {})", startDate, endDate);
 
         AuditStatsResponse stats = auditService.getStatistics(startDate, endDate);
