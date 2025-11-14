@@ -102,7 +102,7 @@
 | **Integration Tests** | `src/test/java/.../controller/` | 46 testes (15 Auth + 15 RBAC + 16 Audit) |
 | **Context Test** | `NeuroefficiencyApplicationTests` | 1 teste |
 | **E2E Tests (Postman)** | Collection JSON | 100+ assertions |
-| **TOTAL** | **82 testes (100% passando)** | ✅ **v4.0 + v3.2.0** |
+| **TOTAL** | **84 testes (100% passando)** | ✅ **v4.0 + v3.2.0** |
 
 **Scripts de Teste Manual:**
 - `scripts/testes/auth/` - Testes de autenticação
