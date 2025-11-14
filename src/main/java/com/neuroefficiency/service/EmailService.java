@@ -43,6 +43,9 @@ public class EmailService {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
+    @Value("${app.email.enabled:true}")
+    private boolean emailEnabled;
+
     /**
      * Envia email de reset de senha
      * 
@@ -115,6 +118,8 @@ public class EmailService {
     /**
      * Envia email multipart (HTML + texto simples)
      * 
+     * Se app.email.enabled=false, apenas loga o email no console (útil para dev).
+     * 
      * @param to destinatário
      * @param subject assunto
      * @param htmlContent conteúdo HTML
@@ -124,17 +129,36 @@ public class EmailService {
     private void sendMultipartEmail(String to, String subject, String htmlContent, String textContent) 
             throws MessagingException {
         
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-        helper.setFrom(fromEmail);
-        helper.setTo(to);
-        helper.setSubject(subject);
+        // Modo DEV: apenas logar email no console
+        if (!emailEnabled) {
+            log.warn("========== EMAIL NÃO ENVIADO (app.email.enabled=false) ==========");
+            log.warn("To: {}", to);
+            log.warn("From: {}", fromEmail);
+            log.warn("Subject: {}", subject);
+            log.warn("Content (Text):\n{}", textContent);
+            log.warn("Content (HTML):\n{}", htmlContent);
+            log.warn("================================================================");
+            return;
+        }
         
-        // Multipart: texto simples como fallback, HTML como principal
-        helper.setText(textContent, htmlContent);
+        // Modo PROD: enviar email real
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        mailSender.send(message);
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            
+            // Multipart: texto simples como fallback, HTML como principal
+            helper.setText(textContent, htmlContent);
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            log.error("Erro ao enviar email para {}: {}", sanitizeEmail(to), e.getMessage());
+            log.error("Para desenvolvimento, configure app.email.enabled=false em application-dev.properties");
+            throw e;
+        }
     }
 
     /**

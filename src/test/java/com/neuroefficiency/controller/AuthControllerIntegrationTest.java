@@ -1,9 +1,12 @@
 package com.neuroefficiency.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.neuroefficiency.domain.model.Role;
+import com.neuroefficiency.domain.repository.RoleRepository;
 import com.neuroefficiency.domain.repository.UsuarioRepository;
 import com.neuroefficiency.dto.request.LoginRequest;
 import com.neuroefficiency.dto.request.RegisterRequest;
+import com.neuroefficiency.dto.request.SetupAdminRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,9 +45,19 @@ class AuthControllerIntegrationTest {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private RoleRepository roleRepository;
+
     @BeforeEach
     void setUp() {
         usuarioRepository.deleteAll();
+        roleRepository.deleteAll();
+        
+        // Criar role ADMIN para os testes de setup-admin
+        Role adminRole = new Role();
+        adminRole.setName("ADMIN");
+        adminRole.setDescription("Administrador do sistema");
+        roleRepository.save(adminRole);
     }
 
     // ==================== TESTES DE HEALTH CHECK ====================
@@ -239,6 +252,162 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Validation Failed"))
                 .andExpect(jsonPath("$.fieldErrors").exists());
+    }
+
+    // ==================== TESTES DE SETUP ADMIN ====================
+
+    @Test
+    @DisplayName("Deve configurar admin com sucesso quando não existe admin no sistema")
+    void shouldSetupAdminSuccessfully() throws Exception {
+        SetupAdminRequest request = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "Admin@1234",
+                "admin@neuroefficiency.com"
+        );
+
+        mockMvc.perform(post("/api/auth/setup-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value(containsString("Administrador configurado com sucesso")))
+                .andExpect(jsonPath("$.user.username").value("admin"))
+                .andExpect(jsonPath("$.user.email").value("admin@neuroefficiency.com"))
+                .andExpect(jsonPath("$.user.id").exists())
+                .andExpect(jsonPath("$.user.enabled").value(true));
+
+        // Verificar que o usuário tem a role ADMIN
+        boolean hasAdminRole = roleRepository.existsUsuarioWithAdminRole();
+        assert hasAdminRole : "Usuário deveria ter a role ADMIN";
+    }
+
+    @Test
+    @DisplayName("Deve retornar 409 quando já existe admin no sistema")
+    void shouldReturn409WhenAdminAlreadyExists() throws Exception {
+        // Primeiro setup
+        SetupAdminRequest firstRequest = new SetupAdminRequest(
+                "admin1",
+                "Admin@1234",
+                "Admin@1234",
+                "admin1@neuroefficiency.com"
+        );
+
+        mockMvc.perform(post("/api/auth/setup-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(firstRequest)))
+                .andExpect(status().isCreated());
+
+        // Tentativa de segundo setup
+        SetupAdminRequest secondRequest = new SetupAdminRequest(
+                "admin2",
+                "Admin@1234",
+                "Admin@1234",
+                "admin2@neuroefficiency.com"
+        );
+
+        mockMvc.perform(post("/api/auth/setup-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(secondRequest)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Admin Already Exists"))
+                .andExpect(jsonPath("$.message").value(containsString("Já existe pelo menos um administrador no sistema")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando senhas não coincidem no setup admin")
+    void shouldReturn400WhenSetupAdminPasswordsDoNotMatch() throws Exception {
+        SetupAdminRequest request = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "DifferentPassword@123",
+                "admin@neuroefficiency.com"
+        );
+
+        mockMvc.perform(post("/api/auth/setup-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Senhas não coincidem"))
+                .andExpect(jsonPath("$.message").value(containsString("A senha e a confirmação de senha não coincidem")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 409 quando username já existe no setup admin")
+    void shouldReturn409WhenSetupAdminUsernameAlreadyExists() throws Exception {
+        // Primeiro, criar um usuário comum
+        RegisterRequest registerRequest = RegisterRequest.builder()
+                .username("admin")
+                .email("user@example.com")
+                .password("User@1234")
+                .confirmPassword("User@1234")
+                .build();
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)));
+
+        // Tentar setup admin com o mesmo username
+        SetupAdminRequest setupRequest = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "Admin@1234",
+                "admin@neuroefficiency.com"
+        );
+
+        mockMvc.perform(post("/api/auth/setup-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(setupRequest)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Username já existe"))
+                .andExpect(jsonPath("$.message").value(containsString("já está em uso")));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando dados de setup admin são inválidos")
+    void shouldReturn400WhenSetupAdminDataIsInvalid() throws Exception {
+        SetupAdminRequest request = new SetupAdminRequest(
+                "ad",  // Username muito curto
+                "weak",  // Senha fraca
+                "weak",
+                "invalid-email"  // Email inválido
+        );
+
+        mockMvc.perform(post("/api/auth/setup-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation Failed"))
+                .andExpect(jsonPath("$.fieldErrors").exists());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 quando email já existe no setup admin")
+    void shouldReturn400WhenSetupAdminEmailAlreadyExists() throws Exception {
+        // Primeiro, criar um usuário comum com um email
+        RegisterRequest registerRequest = RegisterRequest.builder()
+                .username("user1")
+                .email("admin@neuroefficiency.com")
+                .password("User@1234")
+                .confirmPassword("User@1234")
+                .build();
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)));
+
+        // Tentar setup admin com o mesmo email
+        SetupAdminRequest setupRequest = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "Admin@1234",
+                "admin@neuroefficiency.com"
+        );
+
+        mockMvc.perform(post("/api/auth/setup-admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(setupRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("Email já está em uso")));
     }
 }
 

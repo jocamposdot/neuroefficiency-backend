@@ -1,8 +1,12 @@
 # 🚀 Neuroefficiency - Sistema de Autenticação
 
-**Versão:** 3.1 - Fase 1 + Recuperação de Senha + RBAC + DTOs  
+**Versão:** 3.2.0 - Fase 1 + Recuperação de Senha + RBAC + Setup Admin + Email Flexível  
 **Status:** ✅ 100% Funcional e Testado  
-**Última Atualização:** 17 de Outubro de 2025
+**Última Atualização:** 14 de Novembro de 2025
+
+> 🆕 **NOVIDADES v3.2.0:**
+> - ✅ **Endpoint de Setup de Admin** - Configure o primeiro admin do sistema facilmente
+> - ✅ **Email com Fallback** - Desenvolvimento sem MailHog (loga emails no console)
 
 ---
 
@@ -45,13 +49,14 @@
 
 | Métrica | Valor |
 |---------|-------|
+| **Versão Atual** | 3.2.0 - Melhorias Críticas |
 | **Fase Atual** | Fase 3 - RBAC (Role-Based Access Control) |
 | **Progresso** | ✅ 100% Completo |
-| **Endpoints** | 27/27 (100%) |
-| **Testes** | 47/47 Automatizados passando (100%) |
-| **Classes Java** | 45+ |
-| **Linhas de Código** | ~5.500+ |
-| **Documentação** | 15+ arquivos completos |
+| **Endpoints** | 28/28 (100%) - **+1 setup-admin** |
+| **Testes** | 58/58 Automatizados passando (100%) - **+11 novos** |
+| **Classes Java** | 47+ |
+| **Linhas de Código** | ~5.900+ |
+| **Documentação** | 18+ arquivos completos |
 
 ---
 
@@ -126,7 +131,16 @@ Status: 100% Funcional
 Validações: Username único, senha forte, confirmação
 ```
 
-### **3. Login** ✅
+### **3. Setup Admin** ✅ 🆕 **v3.2.0**
+```
+POST /api/auth/setup-admin
+Acesso: Público (apenas se não existir admin)
+Status: 100% Funcional
+Funcionalidades: Cria primeiro admin do sistema, atribui role ADMIN automaticamente
+Segurança: Só funciona quando NÃO existe nenhum admin no sistema
+```
+
+### **4. Login** ✅
 ```
 POST /api/auth/login
 Acesso: Público
@@ -134,29 +148,30 @@ Status: 100% Funcional
 Cria: Sessão HTTP, Cookie de Sessão
 ```
 
-### **4. Me - Get Current User** ✅
+### **5. Me - Get Current User** ✅
 ```
 GET /api/auth/me
 Acesso: Requer autenticação
 Status: 100% Funcional (persistência de sessão implementada)
 ```
 
-### **5. Logout** ✅
+### **6. Logout** ✅
 ```
 POST /api/auth/logout
 Acesso: Requer autenticação
 Status: 100% Funcional (persistência de sessão implementada)
 ```
 
-### **6. Password Reset - Request** ✅ 🆕
+### **7. Password Reset - Request** ✅
 ```
 POST /api/auth/password-reset/request
 Acesso: Público
 Status: 100% Funcional
 Funcionalidades: Rate limiting (3/hora), anti-enumeração, envio de email
+⚠️ Email com fallback: Modo DEV loga no console (app.email.enabled=false)
 ```
 
-### **7. Password Reset - Validate Token** ✅ 🆕
+### **8. Password Reset - Validate Token** ✅
 ```
 GET /api/auth/password-reset/validate-token/{token}
 Acesso: Público
@@ -164,15 +179,16 @@ Status: 100% Funcional
 Valida: Token SHA-256, expiração (30min), uso único
 ```
 
-### **8. Password Reset - Confirm** ✅ 🆕
+### **9. Password Reset - Confirm** ✅
 ```
 POST /api/auth/password-reset/confirm
 Acesso: Público
 Status: 100% Funcional
 Funcionalidades: Altera senha, invalida token, envia email de confirmação
+⚠️ Email com fallback: Modo DEV loga no console (app.email.enabled=false)
 ```
 
-### **9. Password Reset - Health Check** ✅ 🆕
+### **10. Password Reset - Health Check** ✅
 ```
 GET /api/auth/password-reset/health
 Acesso: Público
@@ -185,6 +201,20 @@ Retorna: Status do serviço de recuperação de senha
 ## 📚 DOCUMENTAÇÃO COMPLETA
 
 ### **📖 Documentação Técnica Principal**
+
+#### **[DOCS/MELHORIAS-CRITICAS-SETUP-EMAIL.md](DOCS/MELHORIAS-CRITICAS-SETUP-EMAIL.md)** 🆕 **v3.2.0**
+**Tipo:** Guia de Melhorias Críticas | **Tamanho:** ~450 linhas
+
+**Conteúdo:**
+- ✅ Endpoint setup-admin - Resolução do problema 403 Forbidden
+- ✅ Email com fallback - Desenvolvimento sem MailHog
+- ✅ Guias de uso e configuração
+- ✅ Impacto e benefícios das melhorias
+- ✅ Testes de validação
+
+**Quando usar:** Para entender as melhorias implementadas na v3.2.0 e configurar email.
+
+---
 
 #### **[DOCS/GUIA_TÉCNICO_COMPLETO.md](DOCS/GUIA_TÉCNICO_COMPLETO.md)** ⭐ **COMECE AQUI**
 **Tipo:** Guia Técnico Consolidado | **Tamanho:** ~650 linhas
@@ -395,15 +425,19 @@ powershell -ExecutionPolicy Bypass -File test-simple.ps1
 
 ### **Resultado:**
 ```
-Tests run: 16, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 58, Failures: 0, Errors: 0, Skipped: 0
 ✅ 100% SUCCESS
 ```
 
 ### **Cobertura:**
-- ✅ Testes unitários (6)
-- ✅ Testes de integração (9)
+- ✅ Testes unitários (27):
+  - AuthenticationService (11)
+  - RbacService (16)
+- ✅ Testes de integração (30):
+  - AuthController (15)
+  - RbacController (15)
 - ✅ Teste de contexto Spring (1)
-- ✅ Testes RBAC (manuais)
+- ✅ Testes manuais (PowerShell scripts)
 
 ---
 
@@ -488,7 +522,7 @@ neuro-core/
 - ✅ 15 endpoints RBAC de gerenciamento
 - ✅ Sistema de pacotes (BASIC, PREMIUM, ENTERPRISE, CUSTOM)
 - ✅ DTOs para evitar LazyInitializationException
-- ✅ 47 testes automatizados (100% passando)
+- ✅ 58 testes automatizados (100% passando) - **+11 novos na v3.2.0**
 - ✅ Documentação completa
 
 ---
@@ -544,7 +578,20 @@ neuro-core/
 
 ## 📝 CHANGELOG
 
-### **Versão 3.1 - 17/10/2025** ⭐ ATUAL
+### **Versão 3.2.0 - 14/11/2025** ⭐ ATUAL
+- ✅ **MELHORIAS CRÍTICAS: Setup Admin + Email Flexível**
+- ✅ Novo endpoint `POST /api/auth/setup-admin` para criar primeiro admin
+- ✅ Email com fallback (modo DEV loga no console, sem dependência de MailHog)
+- ✅ Configuração `app.email.enabled` para habilitar/desabilitar emails
+- ✅ DTOs criados: `SetupAdminRequest`
+- ✅ Exceptions criadas: `AdminAlreadyExistsException`
+- ✅ Handler para `IllegalArgumentException` no GlobalExceptionHandler
+- ✅ 11 novos testes automatizados (5 unitários + 6 integração)
+- ✅ Total de 58 testes passando (100%)
+- ✅ Documentação: `MELHORIAS-CRITICAS-SETUP-EMAIL.md`, `TESTES-SETUP-ADMIN.md`
+- ✅ Sistema otimizado para desenvolvimento sem dependências externas
+
+### **Versão 3.1 - 17/10/2025**
 - ✅ **CORREÇÃO CRÍTICA: LazyInitializationException em 12 endpoints RBAC**
 - ✅ DTOs criados: `RoleResponse`, `PermissionResponse`, `UsuarioPacoteResponse`
 - ✅ Implementado `Hibernate.isInitialized()` para verificação de proxies lazy

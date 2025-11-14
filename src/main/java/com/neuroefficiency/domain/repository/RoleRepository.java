@@ -75,4 +75,11 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
      */
     @Query("SELECT r FROM Role r WHERE r.id NOT IN (SELECT DISTINCT r2.id FROM Role r2 JOIN r2.usuarios)")
     List<Role> findRolesWithoutUsuarios();
+
+    /**
+     * Verifica se existe pelo menos um usuário com a role ADMIN
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END " +
+           "FROM Usuario u JOIN u.roles r WHERE r.name = 'ADMIN'")
+    boolean existsUsuarioWithAdminRole();
 }

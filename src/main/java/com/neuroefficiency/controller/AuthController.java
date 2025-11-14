@@ -2,6 +2,7 @@ package com.neuroefficiency.controller;
 
 import com.neuroefficiency.dto.request.LoginRequest;
 import com.neuroefficiency.dto.request.RegisterRequest;
+import com.neuroefficiency.dto.request.SetupAdminRequest;
 import com.neuroefficiency.dto.response.AuthResponse;
 import com.neuroefficiency.dto.response.UserResponse;
 import com.neuroefficiency.service.AuthenticationService;
@@ -51,6 +52,30 @@ public class AuthController {
         log.info("Requisição de registro recebida de IP: {}", getClientIP(httpRequest));
         
         AuthResponse response = authenticationService.register(request);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Endpoint de setup do primeiro administrador
+     * 
+     * POST /api/auth/setup-admin
+     * 
+     * Este endpoint só pode ser usado quando não existe nenhum administrador no sistema.
+     * É usado para configuração inicial da aplicação.
+     * 
+     * @param request dados do administrador
+     * @param httpRequest requisição HTTP
+     * @return resposta com dados do admin criado
+     */
+    @PostMapping("/setup-admin")
+    public ResponseEntity<AuthResponse> setupAdmin(
+            @Valid @RequestBody SetupAdminRequest request,
+            HttpServletRequest httpRequest) {
+        
+        log.info("Requisição de setup de admin recebida de IP: {}", getClientIP(httpRequest));
+        
+        AuthResponse response = authenticationService.setupAdmin(request);
         
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

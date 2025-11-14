@@ -73,6 +73,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Endpoints públicos - Autenticação
                 .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/health").permitAll()
+                .requestMatchers("/api/auth/setup-admin").permitAll()  // Setup inicial do sistema
                 
                 // TAREFA 2: Endpoints públicos - Recuperação de Senha
                 .requestMatchers("/api/auth/password-reset/request").permitAll()

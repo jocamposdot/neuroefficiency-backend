@@ -88,6 +88,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Tratamento para argumentos inválidos (ex: email duplicado)
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(
+            IllegalArgumentException ex) {
+        
+        log.warn("Argumento inválido: {}", ex.getMessage());
+        
+        Map<String, Object> error = buildErrorResponse(
+            HttpStatus.BAD_REQUEST,
+            "Argumento inválido",
+            ex.getMessage()
+        );
+        
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    /**
      * Tratamento para credenciais inválidas
      */
     @ExceptionHandler(BadCredentialsException.class)
@@ -204,6 +222,24 @@ public class GlobalExceptionHandler {
     // ===========================================
     // FASE 3: Handlers para RBAC
     // ===========================================
+
+    /**
+     * Tratamento para admin já existente no sistema
+     */
+    @ExceptionHandler(AdminAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleAdminAlreadyExistsException(
+            AdminAlreadyExistsException ex) {
+        
+        log.warn("Tentativa de setup de admin quando já existe admin: {}", ex.getMessage());
+        
+        Map<String, Object> error = buildErrorResponse(
+                HttpStatus.CONFLICT, 
+                "Admin Already Exists", 
+                ex.getMessage()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 
     /**
      * Tratamento para role já existente

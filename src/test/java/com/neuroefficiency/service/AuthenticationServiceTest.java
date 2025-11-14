@@ -1,10 +1,13 @@
 package com.neuroefficiency.service;
 
 import com.neuroefficiency.domain.model.Usuario;
+import com.neuroefficiency.domain.repository.RoleRepository;
 import com.neuroefficiency.domain.repository.UsuarioRepository;
 import com.neuroefficiency.dto.request.LoginRequest;
 import com.neuroefficiency.dto.request.RegisterRequest;
+import com.neuroefficiency.dto.request.SetupAdminRequest;
 import com.neuroefficiency.dto.response.AuthResponse;
+import com.neuroefficiency.exception.AdminAlreadyExistsException;
 import com.neuroefficiency.exception.PasswordMismatchException;
 import com.neuroefficiency.exception.UsernameAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +46,9 @@ class AuthenticationServiceTest {
     private UsuarioRepository usuarioRepository;
 
     @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -50,6 +56,9 @@ class AuthenticationServiceTest {
 
     @Mock
     private SecurityContextRepository securityContextRepository;
+
+    @Mock
+    private RbacService rbacService;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -193,6 +202,153 @@ class AuthenticationServiceTest {
                 .isInstanceOf(BadCredentialsException.class);
 
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+    }
+
+    // ==================== TESTES DE SETUP ADMIN ====================
+
+    @Test
+    @DisplayName("Deve configurar admin com sucesso quando não existe admin no sistema")
+    void shouldSetupAdminSuccessfullyWhenNoAdminExists() {
+        // Arrange
+        SetupAdminRequest setupRequest = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "Admin@1234",
+                "admin@neuroefficiency.com"
+        );
+
+        Usuario adminUser = Usuario.builder()
+                .id(1L)
+                .username("admin")
+                .email("admin@neuroefficiency.com")
+                .passwordHash("$2a$12$hashedPassword")
+                .enabled(true)
+                .accountNonExpired(true)
+                .accountNonLocked(true)
+                .credentialsNonExpired(true)
+                .build();
+
+        when(roleRepository.existsUsuarioWithAdminRole()).thenReturn(false);
+        when(usuarioRepository.existsByUsername(anyString())).thenReturn(false);
+        when(usuarioRepository.existsByEmail(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$12$hashedPassword");
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(adminUser);
+        when(rbacService.addRoleToUsuario(anyLong(), anyString())).thenReturn(adminUser);
+
+        // Act
+        AuthResponse response = authenticationService.setupAdmin(setupRequest);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Administrador configurado com sucesso");
+        assertThat(response.getUser()).isNotNull();
+        assertThat(response.getUser().getUsername()).isEqualTo("admin");
+        assertThat(response.getUser().getEmail()).isEqualTo("admin@neuroefficiency.com");
+
+        verify(roleRepository).existsUsuarioWithAdminRole();
+        verify(usuarioRepository).existsByUsername("admin");
+        verify(usuarioRepository).existsByEmail("admin@neuroefficiency.com");
+        verify(passwordEncoder).encode("Admin@1234");
+        verify(usuarioRepository).save(any(Usuario.class));
+        verify(rbacService).addRoleToUsuario(1L, "ADMIN");
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando já existe admin no sistema")
+    void shouldThrowExceptionWhenAdminAlreadyExists() {
+        // Arrange
+        SetupAdminRequest setupRequest = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "Admin@1234",
+                "admin@neuroefficiency.com"
+        );
+
+        when(roleRepository.existsUsuarioWithAdminRole()).thenReturn(true);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authenticationService.setupAdmin(setupRequest))
+                .isInstanceOf(AdminAlreadyExistsException.class)
+                .hasMessageContaining("Já existe pelo menos um administrador no sistema");
+
+        verify(roleRepository).existsUsuarioWithAdminRole();
+        verify(usuarioRepository, never()).save(any());
+        verify(rbacService, never()).addRoleToUsuario(anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando senhas não coincidem no setup admin")
+    void shouldThrowExceptionWhenSetupAdminPasswordsDoNotMatch() {
+        // Arrange
+        SetupAdminRequest setupRequest = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "DifferentPassword@123",
+                "admin@neuroefficiency.com"
+        );
+
+        when(roleRepository.existsUsuarioWithAdminRole()).thenReturn(false);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authenticationService.setupAdmin(setupRequest))
+                .isInstanceOf(PasswordMismatchException.class)
+                .hasMessageContaining("A senha e a confirmação de senha não coincidem");
+
+        verify(roleRepository).existsUsuarioWithAdminRole();
+        verify(usuarioRepository, never()).save(any());
+        verify(rbacService, never()).addRoleToUsuario(anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando username já existe no setup admin")
+    void shouldThrowExceptionWhenSetupAdminUsernameAlreadyExists() {
+        // Arrange
+        SetupAdminRequest setupRequest = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "Admin@1234",
+                "admin@neuroefficiency.com"
+        );
+
+        when(roleRepository.existsUsuarioWithAdminRole()).thenReturn(false);
+        when(usuarioRepository.existsByUsername(anyString())).thenReturn(true);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authenticationService.setupAdmin(setupRequest))
+                .isInstanceOf(UsernameAlreadyExistsException.class)
+                .hasMessageContaining("já está em uso");
+
+        verify(roleRepository).existsUsuarioWithAdminRole();
+        verify(usuarioRepository).existsByUsername("admin");
+        verify(usuarioRepository, never()).save(any());
+        verify(rbacService, never()).addRoleToUsuario(anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando email já existe no setup admin")
+    void shouldThrowExceptionWhenSetupAdminEmailAlreadyExists() {
+        // Arrange
+        SetupAdminRequest setupRequest = new SetupAdminRequest(
+                "admin",
+                "Admin@1234",
+                "Admin@1234",
+                "admin@neuroefficiency.com"
+        );
+
+        when(roleRepository.existsUsuarioWithAdminRole()).thenReturn(false);
+        when(usuarioRepository.existsByUsername(anyString())).thenReturn(false);
+        when(usuarioRepository.existsByEmail(anyString())).thenReturn(true);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authenticationService.setupAdmin(setupRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Email já está em uso");
+
+        verify(roleRepository).existsUsuarioWithAdminRole();
+        verify(usuarioRepository).existsByUsername("admin");
+        verify(usuarioRepository).existsByEmail("admin@neuroefficiency.com");
+        verify(usuarioRepository, never()).save(any());
+        verify(rbacService, never()).addRoleToUsuario(anyLong(), anyString());
     }
 }
 

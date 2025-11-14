@@ -1,11 +1,14 @@
 package com.neuroefficiency.service;
 
 import com.neuroefficiency.domain.model.Usuario;
+import com.neuroefficiency.domain.repository.RoleRepository;
 import com.neuroefficiency.domain.repository.UsuarioRepository;
 import com.neuroefficiency.dto.request.LoginRequest;
 import com.neuroefficiency.dto.request.RegisterRequest;
+import com.neuroefficiency.dto.request.SetupAdminRequest;
 import com.neuroefficiency.dto.response.AuthResponse;
 import com.neuroefficiency.dto.response.UserResponse;
+import com.neuroefficiency.exception.AdminAlreadyExistsException;
 import com.neuroefficiency.exception.PasswordMismatchException;
 import com.neuroefficiency.exception.UsernameAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
@@ -38,9 +41,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public class AuthenticationService {
 
     private final UsuarioRepository usuarioRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final RbacService rbacService;
 
     /**
      * Registra um novo usuário no sistema
@@ -172,6 +177,90 @@ public class AuthenticationService {
         log.debug("Recuperando dados do usuário atual: {}", sanitizeUsername(usuario.getUsername()));
 
         return UserResponse.from(usuario);
+    }
+
+    /**
+     * Configura o primeiro usuário administrador do sistema
+     * 
+     * Este endpoint só pode ser usado quando NÃO existe nenhum administrador no sistema.
+     * É usado para o setup inicial da aplicação.
+     * 
+     * @param request dados do administrador
+     * @return resposta contendo informações do admin criado
+     * @throws AdminAlreadyExistsException se já existe um admin no sistema
+     * @throws UsernameAlreadyExistsException se o username já existe
+     * @throws PasswordMismatchException se as senhas não coincidem
+     */
+    @Transactional
+    public AuthResponse setupAdmin(SetupAdminRequest request) {
+        log.info("Tentativa de setup de admin inicial: {}", sanitizeUsername(request.getUsername()));
+
+        // Verificar se já existe algum admin no sistema
+        if (roleRepository.existsUsuarioWithAdminRole()) {
+            log.warn("Tentativa de setup de admin quando já existe admin no sistema");
+            throw new AdminAlreadyExistsException(
+                "Já existe pelo menos um administrador no sistema. " +
+                "O setup inicial só pode ser feito quando não há nenhum admin."
+            );
+        }
+
+        // Validar se as senhas coincidem
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            log.warn("Tentativa de setup de admin com senhas não coincidentes");
+            throw new PasswordMismatchException(
+                "A senha e a confirmação de senha não coincidem"
+            );
+        }
+
+        // Verificar se o username já existe
+        if (usuarioRepository.existsByUsername(request.getUsername())) {
+            log.warn("Tentativa de setup de admin com username já existente: {}", 
+                    sanitizeUsername(request.getUsername()));
+            throw new UsernameAlreadyExistsException(
+                "Username '" + request.getUsername() + "' já está em uso"
+            );
+        }
+
+        // Verificar se o email já existe
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            log.warn("Tentativa de setup de admin com email já existente");
+            throw new IllegalArgumentException("Email já está em uso");
+        }
+
+        // Criar novo usuário administrador
+        Usuario admin = Usuario.builder()
+                .username(request.getUsername())
+                .email(request.getEmail().toLowerCase().trim())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .enabled(true)
+                .accountNonExpired(true)
+                .accountNonLocked(true)
+                .credentialsNonExpired(true)
+                .build();
+
+        // Salvar no banco
+        Usuario savedAdmin = usuarioRepository.save(admin);
+
+        log.info("Administrador criado com sucesso: {} (ID: {})", 
+                sanitizeUsername(savedAdmin.getUsername()), 
+                savedAdmin.getId());
+
+        // Atribuir role ADMIN ao usuário
+        try {
+            rbacService.addRoleToUsuario(savedAdmin.getId(), "ADMIN");
+            log.info("Role ADMIN atribuída ao usuário {} com sucesso", 
+                    sanitizeUsername(savedAdmin.getUsername()));
+        } catch (Exception e) {
+            log.error("Erro ao atribuir role ADMIN ao usuário {}: {}", 
+                    sanitizeUsername(savedAdmin.getUsername()), e.getMessage());
+            throw new RuntimeException("Erro ao configurar permissões de administrador", e);
+        }
+
+        // Retornar resposta
+        return AuthResponse.success(
+            "Administrador configurado com sucesso. Sistema pronto para uso.",
+            UserResponse.from(savedAdmin)
+        );
     }
 
     /**

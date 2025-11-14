@@ -7,6 +7,97 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [3.2.0] - 2025-11-14
+
+### 🎉 Melhorias Críticas: Setup Admin + Email Flexível
+
+#### ✨ Adicionado
+- **Novo endpoint `/api/auth/setup-admin`:**
+  - Permite criar o primeiro administrador do sistema
+  - Acesso público (apenas quando não existe nenhum admin)
+  - Atribui automaticamente a role ADMIN
+  - Validações completas (username único, email único, senha forte)
+  - Segurança: só funciona quando não há nenhum admin no sistema
+
+- **Email com fallback para ambiente DEV:**
+  - Configuração `app.email.enabled` para habilitar/desabilitar emails
+  - Modo DEV (false): Loga emails no console (desenvolvimento sem MailHog)
+  - Modo PROD (true): Envia emails reais via SMTP
+  - Permite desenvolvimento sem dependências externas
+
+- **DTOs:**
+  - `SetupAdminRequest` - DTO para criação de admin inicial
+
+- **Exceptions:**
+  - `AdminAlreadyExistsException` - Lançada quando já existe admin no sistema
+
+- **Testes:**
+  - **11 novos testes automatizados** (5 unitários + 6 integração)
+  - Cobertura 100% do endpoint setup-admin
+  - Todos os cenários cobertos (sucesso, falhas, validações)
+
+- **Documentação:**
+  - `DOCS/MELHORIAS-CRITICAS-SETUP-EMAIL.md` - Guia completo das melhorias
+  - `DOCS/TESTES-SETUP-ADMIN.md` - Documentação dos testes implementados
+  - `RESUMO-IMPLEMENTACAO-V3.2.0.md` - Resumo executivo da versão
+
+#### 🔧 Modificado
+- **`AuthenticationService`:**
+  - Adicionado método `setupAdmin()` para criação de admin inicial
+  - Validações de admin existente, username e email únicos
+
+- **`AuthController`:**
+  - Adicionado endpoint `POST /api/auth/setup-admin`
+  - Documentação inline atualizada
+
+- **`SecurityConfig`:**
+  - Endpoint `/api/auth/setup-admin` adicionado como público
+
+- **`EmailService`:**
+  - Adicionada verificação de `app.email.enabled`
+  - Modo fallback loga no console quando desabilitado
+  - Melhor tratamento de erros
+
+- **`GlobalExceptionHandler`:**
+  - Handler para `AdminAlreadyExistsException` (HTTP 409)
+  - Handler para `IllegalArgumentException` (HTTP 400)
+
+- **`RoleRepository`:**
+  - Adicionado método `existsUsuarioWithAdminRole()` para verificar existência de admin
+
+- **Configurações:**
+  - `application-dev.properties` - `app.email.enabled=false` por padrão
+  - `application-prod.properties` - `app.email.enabled=true` obrigatório
+  - Configurações SMTP para produção documentadas
+
+#### ✅ Testes
+- **Todos os 58 testes continuam passando (100%)**
+  - 16 testes unitários `RbacService`
+  - 15 testes integração `RbacController`
+  - 15 testes integração `AuthController` (**+6 novos**)
+  - 11 testes unitários `AuthenticationService` (**+5 novos**)
+  - 1 teste contexto Spring Boot
+
+#### 🐛 Corrigido
+- **403 Forbidden nos endpoints RBAC:** Resolvido com criação fácil de admin inicial
+- **Dependência de MailHog em DEV:** Email agora funciona sem MailHog rodando
+
+#### 📊 Benefícios
+- ✅ Setup inicial do sistema simplificado
+- ✅ Desenvolvimento sem dependências externas (MailHog)
+- ✅ Segurança mantida (apenas primeiro admin pode ser criado)
+- ✅ Experiência de desenvolvimento melhorada
+- ✅ Cobertura de testes aumentada
+
+#### 📊 Estatísticas
+- **Endpoints:** 28 (+1 setup-admin)
+- **Testes:** 58 (+11)
+- **Classes Java:** 47 (+2)
+- **Linhas de Código:** ~5.900+
+- **Documentação:** 18 arquivos
+
+---
+
 ## [3.1.0] - 2025-10-17
 
 ### 🔧 Correção Crítica: LazyInitializationException
