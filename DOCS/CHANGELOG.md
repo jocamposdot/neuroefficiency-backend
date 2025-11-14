@@ -89,12 +89,98 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - ✅ Experiência de desenvolvimento melhorada
 - ✅ Cobertura de testes aumentada
 
-#### 📊 Estatísticas
+#### 📊 Estatísticas v3.2.0
 - **Endpoints:** 28 (+1 setup-admin)
 - **Testes:** 58 (+11)
 - **Classes Java:** 47 (+2)
 - **Linhas de Código:** ~5.900+
 - **Documentação:** 18 arquivos
+
+---
+
+## [4.0.0] - 2025-11-12
+
+### 🎉 Fase 4: Audit Logging Avançado - COMPLETA
+
+#### 🚀 Nova Funcionalidade Major: Sistema de Auditoria Completo
+
+#### ✨ Adicionado
+
+- **7 novos endpoints REST ADMIN (Auditoria):**
+  - `GET /api/admin/audit/logs` - Listar logs com paginação e filtros
+  - `GET /api/admin/audit/logs/user/{userId}` - Logs por usuário
+  - `GET /api/admin/audit/logs/event/{eventType}` - Logs por tipo de evento
+  - `GET /api/admin/audit/stats` - Estatísticas agregadas
+  - `GET /api/admin/audit/stats/user/{userId}` - Estatísticas por usuário
+  - `GET /api/admin/audit/logs/recent` - Logs recentes
+  - `GET /api/admin/audit/logs/search` - Busca de logs
+
+- **Modelo de Dados:**
+  - `AuditLog` entity - Entidade JPA para registros de auditoria
+  - `AuditEventType` enum - 40 tipos de eventos categorizados
+  - `AuditLogRepository` - Queries customizadas otimizadas
+  - Migration Flyway V6 - Tabela `audit_logs` com índices
+
+- **Serviços e Controllers:**
+  - `AuditService` - Lógica de auditoria completa
+  - `AuditController` - Exposição REST
+
+- **DTOs:**
+  - `AuditLogResponse` - DTO para log individual
+  - `AuditStatsResponse` - DTO para estatísticas
+  - `UserActivityStats` - DTO para atividade de usuários
+
+- **Integração Automática:**
+  - `RbacService` - Operações RBAC auditadas automaticamente
+  - `PasswordResetService` - Reset de senha auditado
+  - Sistema de logging transversal
+
+- **Testes:**
+  - **24 novos testes automatizados** (8 unitários + 16 integração)
+  - Cobertura completa dos endpoints de auditoria
+  - Testes de integração com RBAC
+
+- **Documentação:**
+  - `DOCS/FASE-4-RESUMO-FINAL.md` - Resumo da Fase 4
+  - `DOCS/FASE-4-AUDIT-LOGGING-ESPECIFICACAO.md` - Especificação técnica
+  - `DOCS/FASE-4-PROGRESSO-IMPLEMENTACAO.md` - Progresso
+  - `DOCS/FASE-4-CORRECOES-TESTES.md` - Correções
+  - `DOCS/FASE-4-ATUALIZACOES-DOCUMENTACAO.md` - Atualizações
+
+#### 🔧 Modificado
+- **`RbacService`:**
+  - Integração com AuditService
+  - Logging automático de operações críticas
+
+- **`PasswordResetService`:**
+  - Auditoria de reset de senha
+
+- **`GlobalExceptionHandler`:**
+  - Logging de erros de acesso negado
+
+#### ✅ Testes
+- **71 testes passando (96%)**
+  - 8 testes unitários `AuditService`
+  - 16 testes integração `AuditController`
+  - 11 testes unitários `AuthenticationService`
+  - 16 testes unitários `RbacService`
+  - 15 testes integração `AuthController`
+  - 15 testes integração `RbacController`
+  - 1 teste contexto Spring Boot
+
+#### 📊 Estatísticas Fase 4
+- **Endpoints:** 35 (+7 audit)
+- **Testes:** 71 (+24)
+- **Classes Java:** 51 (+4)
+- **Linhas de Código:** ~7.500+
+- **Documentação:** 23 arquivos (+5)
+
+#### 📊 Benefícios
+- ✅ Compliance (LGPD, GDPR, SOX, HIPAA)
+- ✅ Rastreabilidade completa de ações
+- ✅ Detecção de anomalias
+- ✅ Análise de segurança
+- ✅ Auditoria em tempo real
 
 ---
 

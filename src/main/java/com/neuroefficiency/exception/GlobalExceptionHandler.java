@@ -202,6 +202,24 @@ public class GlobalExceptionHandler {
     // =========================================================================
 
     /**
+     * Tratamento de exceções de autorização (Spring Security)
+     */
+    @ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthorizationDeniedException(
+            org.springframework.security.authorization.AuthorizationDeniedException ex) {
+        
+        Map<String, Object> error = buildErrorResponse(
+            HttpStatus.FORBIDDEN,
+            "Acesso negado",
+            "Você não tem permissão para acessar este recurso."
+        );
+        
+        log.warn("Acesso negado: {}", ex.getMessage());
+        
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    /**
      * Tratamento genérico de exceções
      */
     @ExceptionHandler(Exception.class)
